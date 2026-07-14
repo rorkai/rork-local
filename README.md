@@ -38,7 +38,7 @@ Or from a checkout of this repo:
 bun install
 bun run build
 npm start                            # scans the current directory
-node bin/rork-local.mjs /path/to/app # or point it at an app codebase
+node dist/cli.js /path/to/app        # or point it at an app codebase
 ```
 
 On startup the server:
@@ -177,7 +177,7 @@ running `npx rork-local` don't need Bun:
 
 ```
 src/
-  cli.ts          entry point (bin/rork-local.mjs is a thin shim over dist/cli.js)
+  cli.ts          entry point (the published bin points at dist/cli.js)
   server.ts       Express wiring + HTTP API + boot
   config.ts       paths, rork.config.json, asc binary resolution, project dir
   detect.ts       Xcode-style project detection + caching
@@ -192,7 +192,7 @@ bun install
 bun run build      # bun build → dist/ (node target) + tsc declarations
 bun run dev        # run src/cli.ts directly under Bun
 bun run typecheck  # tsc --noEmit
-npm start          # node bin/rork-local.mjs (runs the built dist/)
+npm start          # node dist/cli.js (runs the built output)
 ```
 
 The browser UI (`public/app.js`) is a plain static asset served as-is — no
