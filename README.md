@@ -180,3 +180,7 @@ npm start          # node bin/rork-local.mjs (runs the built dist/)
 
 The browser UI (`public/app.js`) is a plain static asset served as-is — no
 bundler, no build step.
+
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE).

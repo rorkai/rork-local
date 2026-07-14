@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Localhost Rork-style app preview: iOS simulator in the browser + one-click publish via asc",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": {
     "rork-local": "./bin/rork-local.mjs"
   },
