@@ -28,12 +28,9 @@ _The device switcher and simulator tools panels come from serve-sim._
 From your app's directory:
 
 ```bash
-bunx rork-local
+npx rork-local
 # → http://localhost:3131
 ```
-
-Bun isn't required to run it — the published CLI targets plain Node, so
-`npx rork-local` works just as well.
 
 Or from a checkout of this repo:
 
@@ -127,24 +124,6 @@ detection):
 | `ASC_BIN`    | Path to the `asc` binary         |
 | `ASC_APP_ID` | Default App Store Connect app ID |
 | `RORK_PROJECT` | App codebase to auto-detect publish settings from (default: cwd) |
-
-## API
-
-| Endpoint | Purpose |
-| -------- | ------- |
-| `GET /api/status` | Booted device, asc version, config, detection, current job |
-| `GET /api/auth` | API-key (`asc auth status`) + web-session (`asc web auth status`) credential status |
-| `POST /api/config/detect` | Re-run codebase auto-detection |
-| `POST /api/config/project` | Change the project directory and re-detect |
-| `POST /api/apps/create` | Create an App Store Connect app (`asc web apps create`) |
-| `POST /api/publish` | Start a TestFlight/App Store publish |
-| `GET /api/publish/stream` | SSE stream of job status + log lines |
-| `POST /api/publish/cancel` | Cancel the running job |
-| `GET /api/screenshots` | List raw + framed screenshots |
-| `POST /api/screenshots/capture` | Snap the booted simulator |
-| `POST /api/screenshots/frame` | Frame a raw shot in a device bezel |
-| `POST /api/screenshots/upload` | Upload shots to the App Store listing |
-| `DELETE /api/screenshots/:kind/:name` | Delete a raw or framed screenshot |
 
 ## Agent Skill
 

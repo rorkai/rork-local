@@ -4,8 +4,7 @@ rork-local is a localhost Rork-style app preview: a live iOS Simulator stream in
 the browser (via [serve-sim](https://github.com/EvanBacon/serve-sim)) plus
 one-click TestFlight / App Store publishing and screenshot tooling (via the
 [asc](https://github.com/rudrankriyam/App-Store-Connect-CLI) CLI). Users run
-`bunx rork-local` (or `npx rork-local`) from their app project and get the UI
-at `http://localhost:3131`.
+`npx rork-local` from their app project and get the UI at `http://localhost:3131`.
 
 ## Conventions
 
@@ -34,7 +33,7 @@ bun start          # node dist/cli.js (runs the built output)
 - The published bin points straight at `dist/cli.js` (shebang preserved by
   `bun build`); rebuild before testing server changes through the bin.
 - Static asset changes under `public/` need no server restart.
-- The dev server typically runs under pm2 (`bunx pm2 restart rork-local
+- The dev server typically runs under pm2 (`npx pm2 restart rork-local
 --update-env` from the project dir). serve-sim's native helper occasionally
   segfaults right after startup; pm2 absorbs it — retry once if a bare start
   dies within seconds.
@@ -43,18 +42,11 @@ bun start          # node dist/cli.js (runs the built output)
 
 ## E2E testing via the HTTP API
 
-Everything is drivable with `curl` against a running server — see
-[`skills/rork-local/SKILL.md`](skills/rork-local/SKILL.md) for the full surface
-with examples. The essentials:
-
-- `GET /api/status` — booted device, asc version, merged config + detection,
-  current job. Use this as the smoke check after any server change.
-- `POST /api/config/project` — switch the detection target at runtime.
-- `POST /api/publish` + `GET /api/publish/stream` (SSE) — publish flow.
-- `POST /api/screenshots/capture` → `GET /api/screenshots` →
-  `DELETE /api/screenshots/raw/<name>` — cheap read/write round-trip that
-  exercises `simctl` without touching App Store Connect.
-- The simulator UI is mounted same-origin at `/.sim`.
+Everything the UI does is drivable with `curl` against a running server. The
+endpoint reference lives in [`skills/rork-local/SKILL.md`](skills/rork-local/SKILL.md)
+— that skill is the agent-facing API contract; read it instead of guessing
+routes. The smoke-test script in `.codex/skills/rork-local-dev` exercises the
+essentials after a server change.
 
 Live App Store Connect calls need `asc auth login` (API key) and, for app
 creation, `asc web auth login`. Prefer read-only calls when verifying; never

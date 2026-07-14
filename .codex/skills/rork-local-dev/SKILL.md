@@ -22,13 +22,13 @@ public `skills/rork-local` skill; do not add internal dev workflows there.
 2. Restart the dev server. It normally runs under pm2:
 
    ```sh
-   bunx pm2 restart rork-local --update-env
+   npx pm2 restart rork-local --update-env
    ```
 
    If it isn't registered yet:
 
    ```sh
-   ASC_BIN=/path/to/asc bunx pm2 start dist/cli.js --name rork-local
+   ASC_BIN=/path/to/asc npx pm2 start dist/cli.js --name rork-local
    ```
 
    serve-sim's native helper occasionally segfaults right after startup; pm2
