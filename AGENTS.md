@@ -4,7 +4,8 @@ rork-local is a localhost Rork-style app preview: a live iOS Simulator stream in
 the browser (via [serve-sim](https://github.com/EvanBacon/serve-sim)) plus
 one-click TestFlight / App Store publishing and screenshot tooling (via the
 [asc](https://github.com/rudrankriyam/App-Store-Connect-CLI) CLI). Users run
-`npx rork-local` from their app project and get the UI at `http://localhost:3131`.
+`bunx rork-local` (or `npx rork-local`) from their app project and get the UI
+at `http://localhost:3131`.
 
 ## Conventions
 
@@ -24,7 +25,7 @@ bun install
 bun run dev        # run src/cli.ts directly under Bun (port 3131)
 bun run build      # bun build → dist/ (node target) + tsc declarations
 bun run typecheck  # tsc --noEmit
-npm start          # node dist/cli.js (runs the built output)
+bun start          # node dist/cli.js (runs the built output)
 ```
 
 - Server code lives in `src/` (`server.ts` HTTP wiring, `detect.ts` project
@@ -33,7 +34,7 @@ npm start          # node dist/cli.js (runs the built output)
 - The published bin points straight at `dist/cli.js` (shebang preserved by
   `bun build`); rebuild before testing server changes through the bin.
 - Static asset changes under `public/` need no server restart.
-- The dev server typically runs under pm2 (`npx pm2 restart rork-local
+- The dev server typically runs under pm2 (`bunx pm2 restart rork-local
 --update-env` from the project dir). serve-sim's native helper occasionally
   segfaults right after startup; pm2 absorbs it — retry once if a bare start
   dies within seconds.

@@ -25,10 +25,12 @@ plain HTTP API, so you can drive it end to end with `curl`.
 Run from the iOS app project's directory (detection scans the cwd):
 
 ```sh
-npx rork-local            # → http://localhost:3131
-PORT=4000 npx rork-local  # custom port
-npx rork-local /path/to/app-project  # explicit project dir
+bunx rork-local            # → http://localhost:3131
+PORT=4000 bunx rork-local  # custom port
+bunx rork-local /path/to/app-project  # explicit project dir
 ```
+
+The CLI runs on plain Node, so `npx rork-local` works if Bun isn't installed.
 
 Startup boots a simulator if none is running, starts the serve-sim helper, and
 auto-detects publish config (bundle ID, version, newest .ipa, ASC app ID, beta

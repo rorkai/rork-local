@@ -28,16 +28,19 @@ _The device switcher and simulator tools panels come from serve-sim._
 From your app's directory:
 
 ```bash
-npx rork-local
+bunx rork-local
 # → http://localhost:3131
 ```
+
+Bun isn't required to run it — the published CLI targets plain Node, so
+`npx rork-local` works just as well.
 
 Or from a checkout of this repo:
 
 ```bash
 bun install
 bun run build
-npm start                            # scans the current directory
+bun start                            # scans the current directory
 node dist/cli.js /path/to/app        # or point it at an app codebase
 ```
 
@@ -162,6 +165,8 @@ Install it in Claude Code via the plugin marketplace:
 or in any Agent Skills-compatible tool:
 
 ```sh
+bunx add-skill rorkai/rork-local
+# or
 npx skills add rorkai/rork-local
 ```
 
@@ -173,7 +178,7 @@ itself lives in `.codex/skills/rork-local-dev`.
 
 The server is TypeScript in `src/`. Bun is the dev/build toolchain (like
 serve-sim), but the published artifacts in `dist/` target plain Node — users
-running `npx rork-local` don't need Bun:
+running the CLI via `npx` don't need Bun:
 
 ```
 src/
@@ -192,7 +197,7 @@ bun install
 bun run build      # bun build → dist/ (node target) + tsc declarations
 bun run dev        # run src/cli.ts directly under Bun
 bun run typecheck  # tsc --noEmit
-npm start          # node dist/cli.js (runs the built output)
+bun start          # node dist/cli.js (runs the built output)
 ```
 
 The browser UI (`public/app.js`) is a plain static asset served as-is — no
