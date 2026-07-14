@@ -9,6 +9,8 @@ in Cursor, Claude Code, or any browser-capable agent and iterate on your app end
 - Publishing and screenshots are powered by [`asc`](https://github.com/rorkai/App-Store-Connect-CLI)
   (`asc publish`, `asc screenshots`, `asc web apps create`).
 
+![Rork Local — live iOS simulator in the browser with a Rork-style Publish flow](docs/screenshot.png)
+
 ## Requirements
 
 - macOS (Apple Silicon) with Xcode command line tools (`xcrun simctl`)
