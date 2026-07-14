@@ -197,6 +197,8 @@ body { display: flex; flex-direction: column; }
 }
 .footer a { color: var(--fg); text-decoration: none; font-weight: 500; }
 .footer a:hover { text-decoration: underline; }
+/* author credits: same muted tone as the surrounding text, still clickable */
+.footer a.author { color: inherit; font-weight: 400; }
 
 /* screenshot shutter flash */
 .flash {

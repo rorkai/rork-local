@@ -5,9 +5,10 @@ simulator, a Rork-style **Publish** flow, and App Store **screenshot** tooling. 
 in Cursor, Claude Code, or any browser-capable agent and iterate on your app end to end.
 
 - Simulator streaming is powered by [`serve-sim`](https://github.com/EvanBacon/serve-sim)
-  (60 FPS stream, full touch/keyboard input, logs).
-- Publishing and screenshots are powered by [`asc`](https://github.com/rorkai/App-Store-Connect-CLI)
-  (`asc publish`, `asc screenshots`, `asc web apps create`).
+  by [Evan Bacon](https://github.com/EvanBacon) (60 FPS stream, full touch/keyboard input, logs).
+- Publishing and screenshots are powered by the [`asc`](https://github.com/rorkai/App-Store-Connect-CLI)
+  CLI by [Rudrank Riyam](https://github.com/rudrankriyam) (`asc publish`, `asc screenshots`,
+  `asc web apps create`).
 
 ![Rork Local — live iOS simulator in the browser with a Rork-style Publish flow](docs/screenshot.png)
 
