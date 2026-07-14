@@ -143,6 +143,15 @@ detection):
 | `POST /api/screenshots/upload` | Upload shots to the App Store listing |
 | `DELETE /api/screenshots/:kind/:name` | Delete a raw or framed screenshot |
 
+## Agent Skill
+
+An [Agent Skill](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+ships in [`skills/rork-local`](skills/rork-local) — it teaches AI coding agents
+(Claude Code, Cursor, Codex CLI, and any host implementing the open Agent Skills
+standard) how to start rork-local from an app project and drive the whole flow
+over HTTP: status/detection, TestFlight and App Store publishing with SSE logs,
+screenshot capture/frame/upload, and first-publish app creation.
+
 ## Development
 
 The server is TypeScript in `src/`. Bun is the dev/build toolchain (like
