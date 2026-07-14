@@ -7,10 +7,13 @@
   "bin": {
     "rork-local": "./bin/rork-local.mjs"
   },
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
   "files": [
     "bin/",
-    "server.mjs",
-    "public/"
+    "dist/",
+    "public/",
+    "skills/"
   ],
   "keywords": [
     "ios",
@@ -20,8 +23,11 @@
     "asc"
   ],
   "scripts": {
-    "start": "node server.mjs",
-    "dev": "node server.mjs"
+    "build": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external && tsc --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "dev": "bun run src/cli.ts",
+    "start": "node bin/rork-local.mjs",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=20"
@@ -29,5 +35,10 @@
   "dependencies": {
     "express": "^5.1.0",
     "serve-sim": "latest"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "typescript": "^5.9.3"
   }
 }

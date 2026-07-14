@@ -35,9 +35,10 @@ npx rork-local
 Or from a checkout of this repo:
 
 ```bash
-npm install
-npm start                      # scans the current directory
-node server.mjs /path/to/app   # or point it at an app codebase
+bun install
+bun run build
+npm start                            # scans the current directory
+node bin/rork-local.mjs /path/to/app # or point it at an app codebase
 ```
 
 On startup the server:
@@ -140,3 +141,33 @@ detection):
 | `POST /api/screenshots/capture` | Snap the booted simulator |
 | `POST /api/screenshots/frame` | Frame a raw shot in a device bezel |
 | `POST /api/screenshots/upload` | Upload shots to the App Store listing |
+| `DELETE /api/screenshots/:kind/:name` | Delete a raw or framed screenshot |
+
+## Development
+
+The server is TypeScript in `src/`. Bun is the dev/build toolchain (like
+serve-sim), but the published artifacts in `dist/` target plain Node — users
+running `npx rork-local` don't need Bun:
+
+```
+src/
+  cli.ts          entry point (bin/rork-local.mjs is a thin shim over dist/cli.js)
+  server.ts       Express wiring + HTTP API + boot
+  config.ts       paths, rork.config.json, asc binary resolution, project dir
+  detect.ts       Xcode-style project detection + caching
+  jobs.ts         single-job asc runner + SSE fan-out
+  screenshots.ts  simctl capture, asc frame, shot listing
+  sim.ts          simulator boot + serve-sim helper
+  types.ts        shared API payload types
+```
+
+```bash
+bun install
+bun run build      # bun build → dist/ (node target) + tsc declarations
+bun run dev        # run src/cli.ts directly under Bun
+bun run typecheck  # tsc --noEmit
+npm start          # node bin/rork-local.mjs (runs the built dist/)
+```
+
+The browser UI (`public/app.js`) is a plain static asset served as-is — no
+bundler, no build step.
