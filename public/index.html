@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rork Local</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23111'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='-apple-system'>R</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/rork-logo.svg" alt="Rork" class="brand-logo" />
+      <span class="brand-badge">Local</span>
+    </div>
+    <div class="topbar-actions">
+      <button id="capture-btn" class="tool-btn" title="Take screenshot">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      </button>
+      <button id="shots-btn" class="tool-btn" title="Screenshots">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        <span id="shots-count" class="shots-count hidden">0</span>
+      </button>
+      <button id="publish-btn" class="publish-btn" title="Share your app">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+        Publish
+        <span class="pub-status" aria-hidden="true"><span class="pub-dot"></span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <iframe id="sim-frame" src="/.sim" title="iOS Simulator" allow="clipboard-read; clipboard-write"></iframe>
+    <div id="countdown" class="countdown hidden"><span id="countdown-num">3</span></div>
+    <div id="flash" class="flash"></div>
+  </main>
+
+  <footer class="footer">
+    powered by&nbsp;<a href="https://github.com/EvanBacon/serve-sim" target="_blank" rel="noopener">serve-sim</a>&nbsp;·&nbsp;<a href="https://github.com/rorkai/App-Store-Connect-CLI" target="_blank" rel="noopener">asc</a>&nbsp;CLI
+  </footer>
+
+  <!-- ================= Publish popover ================= -->
+  <div id="popover" class="popover hidden" role="dialog" aria-label="Publish">
+    <header class="popover-header"><h2>Publish</h2></header>
+    <div class="popover-body">
+      <div class="pub-section">
+        <div>
+          <h4 class="section-title">App Store</h4>
+          <p class="section-sub">Build and submit this app to TestFlight and the App Store</p>
+        </div>
+        <div id="pub-status-row" class="status-row hidden">
+          <span id="pub-status-dot" class="dot dot-idle"></span>
+          <span id="pub-status-label"></span>
+        </div>
+        <button id="open-wizard-btn" class="cta-btn btn-full">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+          Submit to App Store
+        </button>
+      </div>
+      <div class="popover-divider"></div>
+      <div class="pub-section">
+        <div>
+          <h4 class="section-title">Screenshots</h4>
+          <p class="section-sub">Capture, frame, and upload App Store listing screenshots</p>
+        </div>
+        <button id="open-shots-btn" class="cta-btn cta-secondary btn-full">Open Screenshots</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= App Store wizard (bottom sheet) ================= -->
+  <div id="wizard-backdrop" class="sheet-backdrop hidden"></div>
+  <div id="wizard" class="sheet hidden" role="dialog" aria-label="Publish to App Store">
+    <div class="sheet-header">
+      <div class="sheet-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm-1.62 5.53a.9.9 0 0 1 1.23.33l.4.7.41-.7a.9.9 0 0 1 1.55.9l-3.07 5.3h2.61c.85 0 1.33 1 .8 1.66h-7.4a.9.9 0 0 1 0-1.8h2.5l2.63-4.55-.99-1.7a.9.9 0 0 1 .33-1.24v.1zm-3.53 9.6.6-1.03c.35-.4 1.02-.35 1.42.09.3.4.32.94.05 1.4l-.53.92a.9.9 0 0 1-1.55-.9l.01-.48zm10.9-.68h-1.9l1.2 2.06a.9.9 0 1 1-1.56.9L12.4 11.6c-.35-.75-.13-1.66.52-2.06.62.36 1.03.9 1.42 1.57l.61 1.05h2.8a.9.9 0 0 1 0 1.8v-.5z"/></svg>
+        Publish to App Store
+      </div>
+      <button id="wizard-close" class="icon-btn" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="stepper">
+      <div class="stepper-meta"><span id="step-count">Step 1 of 3</span><span id="step-name">App Info</span></div>
+      <div class="pills" aria-label="Submission progress">
+        <span class="pill active current" data-pill="0"><span class="pill-bar"></span><span class="pill-label">App Info</span></span>
+        <span class="pill" data-pill="1"><span class="pill-bar"></span><span class="pill-label">App Store Connect</span></span>
+        <span class="pill" data-pill="2"><span class="pill-bar"></span><span class="pill-label">Submit</span></span>
+      </div>
+    </div>
+
+    <div class="sheet-body">
+      <!-- Step 1: App Info -->
+      <section class="step" data-step="0">
+        <label class="field project-field">
+          <span>Project</span>
+          <input id="w-project" class="mono" placeholder="/path/to/your-app" autocomplete="off" spellcheck="false" />
+          <em id="w-hint" class="autofill-hint">Directory scanned for app.json, Xcode projects, and .ipa builds</em>
+        </label>
+        <div id="w-nodetect" class="banner warn hidden">
+          <div class="banner-title">No app project found</div>
+          <p>Nothing was detected in this folder. Point the Project field at your app's directory (the one with <code>app.json</code> or an Xcode project), or fill in the fields below manually.</p>
+        </div>
+        <div class="step-grid">
+          <div class="col">
+            <label class="field">
+              <span>App ID</span>
+              <input id="w-app" placeholder="eg. 6759231657" autocomplete="off" spellcheck="false" />
+              <em>Your App Store Connect app ID</em>
+            </label>
+            <div id="w-create-wrap">
+              <button id="w-create-link" type="button" class="link-btn hidden">+ Create new app on App Store Connect</button>
+              <div id="w-create-block" class="create-block hidden">
+                <label class="field"><span>App Name</span><input id="c-name" placeholder="eg. My App" autocomplete="off" spellcheck="false" /></label>
+                <label class="field"><span>Bundle ID</span><input id="c-bundle" class="mono" placeholder="eg. com.example.app" autocomplete="off" spellcheck="false" /></label>
+                <label class="field"><span>SKU</span><input id="c-sku" placeholder="eg. MYAPP123" autocomplete="off" spellcheck="false" /></label>
+                <div class="create-actions">
+                  <button id="c-create" type="button" class="cta-btn small-btn">Create App</button>
+                  <button id="c-cancel" type="button" class="ghost-btn small-btn">Cancel</button>
+                </div>
+                <p id="c-error" class="form-error hidden"></p>
+                <pre id="c-log" class="console small hidden"></pre>
+              </div>
+            </div>
+            <label class="field">
+              <span>App Version</span>
+              <input id="w-version" placeholder="eg. 1.0.0" autocomplete="off" spellcheck="false" />
+              <em>Semantic version (major.minor.patch)</em>
+            </label>
+            <label class="field">
+              <span>IPA path</span>
+              <input id="w-ipa" class="mono" placeholder="eg. build/MyApp.ipa" autocomplete="off" spellcheck="false" />
+              <em>The signed build to upload</em>
+            </label>
+          </div>
+          <div class="col">
+            <div class="field">
+              <span>Destination</span>
+              <div class="segmented">
+                <label><input type="radio" name="w-target" value="testflight" checked /><span>TestFlight</span></label>
+                <label><input type="radio" name="w-target" value="appstore" /><span>App Store</span></label>
+              </div>
+              <em id="dest-hint">Distribute the build to beta testers</em>
+            </div>
+            <label class="field" id="w-field-group">
+              <span>Beta group(s)</span>
+              <input id="w-group" list="group-options" placeholder="eg. External Testers" autocomplete="off" spellcheck="false" />
+              <datalist id="group-options"></datalist>
+              <em>Comma-separated TestFlight group names or IDs</em>
+            </label>
+            <div class="checks">
+              <label class="check"><input type="checkbox" id="w-wait" checked /><span>Wait for processing</span></label>
+              <label class="check"><input type="checkbox" id="w-submit" /><span>Submit for review</span></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: App Store Connect -->
+      <section class="step hidden" data-step="1">
+        <div id="auth-card" class="auth-card">
+          <div class="auth-spinner" id="auth-loading"><span class="spinner"></span> Checking App Store Connect credentials…</div>
+          <div id="auth-results" class="hidden">
+            <div class="auth-row"><span id="auth-key-dot" class="dot dot-idle"></span><span id="auth-key-label">API key (publishing)</span></div>
+            <div class="auth-row"><span id="auth-web-dot" class="dot dot-idle"></span><span id="auth-web-label">Web session (app creation)</span></div>
+            <p class="auth-note">Credentials come from <code>asc auth login</code> (API key) and <code>asc web auth login</code> (web session) and are stored locally. Nothing is sent anywhere except Apple.</p>
+          </div>
+          <div id="auth-bad" class="hidden">
+            <div class="banner">
+              <div class="banner-title">App Store Connect API key required</div>
+              <p>Publishing talks to the App Store Connect API. Create a key at App Store Connect → Users and Access → Integrations, then run:</p>
+              <pre>asc auth login</pre>
+              <p id="auth-detail" class="auth-detail"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: Submit -->
+      <section class="step hidden" data-step="2">
+        <div class="progress-block">
+          <div class="progress-heading">
+            <span id="prog-title" class="progress-title">Preparing</span>
+            <span id="prog-pct" class="progress-pct">2%</span>
+          </div>
+          <div class="progress-track">
+            <div id="prog-fill" class="progress-fill" style="width: 2%"><div class="progress-stripes"></div></div>
+          </div>
+          <p id="prog-desc" class="progress-desc">Starting submission…</p>
+        </div>
+        <pre id="w-log" class="console" aria-live="polite"></pre>
+      </section>
+    </div>
+
+    <div class="sheet-footer">
+      <span id="w-note" class="footer-note"></span>
+      <div class="footer-btns">
+        <button id="w-back" class="ghost-btn hidden">Back</button>
+        <button id="w-next" class="cta-btn">Continue</button>
+      </div>
+    </div>
+    <p id="w-error" class="form-error hidden"></p>
+  </div>
+
+  <!-- ================= Screenshots panel ================= -->
+  <div id="shots-backdrop" class="sheet-backdrop hidden"></div>
+  <aside id="shots-panel" class="drawer hidden" aria-label="Screenshots">
+    <div class="drawer-header">
+      <h2>Screenshots</h2>
+      <div class="drawer-header-actions">
+        <button id="shots-capture" class="detect-btn" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          Capture
+        </button>
+        <button id="shots-close" class="icon-btn" aria-label="Close">&times;</button>
+      </div>
+    </div>
+
+    <div class="shots-scroll">
+      <div class="shots-group">
+        <div class="group-title">Raw captures <span id="raw-empty" class="group-empty">— none yet, hit Capture</span></div>
+        <div id="raw-grid" class="shot-grid"></div>
+      </div>
+
+      <div class="shots-group">
+        <div class="group-title-row">
+          <div class="group-title">Framed <span id="framed-empty" class="group-empty">— frame a capture below</span></div>
+          <select id="frame-device" class="mini-select"></select>
+        </div>
+        <div id="framed-grid" class="shot-grid"></div>
+      </div>
+
+      <div class="shots-group upload-group">
+        <div class="group-title">Upload to App Store</div>
+        <div class="upload-form">
+          <label class="field"><span>App ID</span><input id="s-app" placeholder="eg. 6759231657" spellcheck="false" /></label>
+          <div class="upload-row">
+            <label class="field"><span>Version</span><input id="s-version" placeholder="1.0.0" spellcheck="false" /></label>
+            <label class="field"><span>Device type</span>
+              <select id="s-device-type" class="mini-select tall">
+                <option value="IPHONE_61" selected>IPHONE_61 (6.1")</option>
+                <option value="IPHONE_67">IPHONE_67 (6.7")</option>
+                <option value="IPHONE_65">IPHONE_65 (6.5")</option>
+              </select>
+            </label>
+          </div>
+          <div class="segmented small">
+            <label><input type="radio" name="s-source" value="framed" checked /><span>Framed</span></label>
+            <label><input type="radio" name="s-source" value="raw" /><span>Raw</span></label>
+          </div>
+          <button id="s-upload" class="cta-btn">Accept &amp; Upload</button>
+          <p id="s-error" class="form-error hidden"></p>
+        </div>
+        <pre id="s-log" class="console small hidden"></pre>
+      </div>
+    </div>
+  </aside>
+
+  <script src="/app.js"></script>
+</body>
+</html>
