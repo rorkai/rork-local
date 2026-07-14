@@ -1,0 +1,11 @@
+{
+  "name": "rork-local",
+  "version": "0.1.0",
+  "description": "Preview an iOS app in a live simulator tab and publish it to TestFlight or the App Store with rork-local.",
+  "author": {
+    "name": "Rork"
+  },
+  "homepage": "https://github.com/rorkai/rork-local",
+  "repository": "https://github.com/rorkai/rork-local",
+  "license": "Apache-2.0"
+}

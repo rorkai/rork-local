@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "rork-local",
+  "description": "Preview an iOS app in a live simulator tab and publish it to the App Store from Claude Code",
+  "owner": {
+    "name": "Rork"
+  },
+  "plugins": [
+    {
+      "name": "rork-local",
+      "source": "./",
+      "description": "Run rork-local from an app project for a live browser-based iOS simulator plus TestFlight / App Store publishing and screenshot tooling via the asc CLI — all drivable over a plain HTTP API.",
+      "category": "development"
+    }
+  ]
+}

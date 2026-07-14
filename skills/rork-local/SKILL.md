@@ -1,6 +1,7 @@
 ---
 name: rork-local
 description: Preview an iOS app in a live simulator tab and publish it to TestFlight or the App Store with rork-local. Use when the user wants to run rork-local, see their app in the browser-based simulator, capture or frame App Store screenshots, or publish a built .ipa via the asc CLI from localhost.
+license: Apache-2.0
 ---
 
 # rork-local

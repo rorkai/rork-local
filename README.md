@@ -152,6 +152,23 @@ standard) how to start rork-local from an app project and drive the whole flow
 over HTTP: status/detection, TestFlight and App Store publishing with SSE logs,
 screenshot capture/frame/upload, and first-publish app creation.
 
+Install it in Claude Code via the plugin marketplace:
+
+```sh
+/plugin marketplace add rorkai/rork-local
+/plugin install rork-local
+```
+
+or in any Agent Skills-compatible tool:
+
+```sh
+npx skills add rorkai/rork-local
+```
+
+Agent-facing repo docs live in [`AGENTS.md`](AGENTS.md) (with `CLAUDE.md`
+symlinked to it), and a project-scoped dev skill for working on rork-local
+itself lives in `.codex/skills/rork-local-dev`.
+
 ## Development
 
 The server is TypeScript in `src/`. Bun is the dev/build toolchain (like

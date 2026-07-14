@@ -1,0 +1,66 @@
+# AGENTS.md
+
+rork-local is a localhost Rork-style app preview: a live iOS Simulator stream in
+the browser (via [serve-sim](https://github.com/EvanBacon/serve-sim)) plus
+one-click TestFlight / App Store publishing and screenshot tooling (via the
+[asc](https://github.com/rudrankriyam/App-Store-Connect-CLI) CLI). Users run
+`npx rork-local` from their app project and get the UI at `http://localhost:3131`.
+
+## Conventions
+
+- Prefer kebab-case for all TS/JS files.
+- Only support maintained Node.js LTS releases (currently Node 20+).
+- The published `dist/` artifacts must run on plain Node — Bun is a dev/build
+  tool only, never a runtime requirement for `npx rork-local` users.
+- No interactive prompts in the server; everything the UI does must also be
+  reachable through the plain HTTP API.
+- The browser UI (`public/`) is served as static assets with no bundler or
+  build step. Keep it vanilla HTML/CSS/JS.
+
+## Build and dev
+
+```sh
+bun install
+bun run dev        # run src/cli.ts directly under Bun (port 3131)
+bun run build      # bun build → dist/ (node target) + tsc declarations
+bun run typecheck  # tsc --noEmit
+npm start          # node bin/rork-local.mjs (runs the built dist/)
+```
+
+- Server code lives in `src/` (`server.ts` HTTP wiring, `detect.ts` project
+  auto-detection, `jobs.ts` asc job runner + SSE, `screenshots.ts`, `sim.ts`
+  simulator bootstrap, `config.ts`, `types.ts` shared API payload types).
+- `bin/rork-local.mjs` is a thin Node shim over `dist/cli.js`; rebuild before
+  testing server changes through the bin.
+- Static asset changes under `public/` need no server restart.
+- The dev server typically runs under pm2 (`npx pm2 restart rork-local
+--update-env` from the project dir). serve-sim's native helper occasionally
+  segfaults right after startup; pm2 absorbs it — retry once if a bare start
+  dies within seconds.
+- `asc` resolution: `ASC_BIN` env > `PATH`. Set `ASC_BIN=/path/to/asc` when the
+  CLI is not installed globally.
+
+## E2E testing via the HTTP API
+
+Everything is drivable with `curl` against a running server — see
+[`skills/rork-local/SKILL.md`](skills/rork-local/SKILL.md) for the full surface
+with examples. The essentials:
+
+- `GET /api/status` — booted device, asc version, merged config + detection,
+  current job. Use this as the smoke check after any server change.
+- `POST /api/config/project` — switch the detection target at runtime.
+- `POST /api/publish` + `GET /api/publish/stream` (SSE) — publish flow.
+- `POST /api/screenshots/capture` → `GET /api/screenshots` →
+  `DELETE /api/screenshots/raw/<name>` — cheap read/write round-trip that
+  exercises `simctl` without touching App Store Connect.
+- The simulator UI is mounted same-origin at `/.sim`.
+
+Live App Store Connect calls need `asc auth login` (API key) and, for app
+creation, `asc web auth login`. Prefer read-only calls when verifying; never
+publish to a real app without explicit user intent.
+
+## Keeping the skill honest
+
+`skills/rork-local/SKILL.md` documents the CLI + HTTP surface for coding
+agents. When you change an endpoint, flag, or response shape, update the skill
+in the same change.
