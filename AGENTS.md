@@ -24,14 +24,14 @@ bun install
 bun run dev        # run src/cli.ts directly under Bun (port 3131)
 bun run build      # bun build → dist/ (node target) + tsc declarations
 bun run typecheck  # tsc --noEmit
-npm start          # node bin/rork-local.mjs (runs the built dist/)
+npm start          # node dist/cli.js (runs the built output)
 ```
 
 - Server code lives in `src/` (`server.ts` HTTP wiring, `detect.ts` project
   auto-detection, `jobs.ts` asc job runner + SSE, `screenshots.ts`, `sim.ts`
   simulator bootstrap, `config.ts`, `types.ts` shared API payload types).
-- `bin/rork-local.mjs` is a thin Node shim over `dist/cli.js`; rebuild before
-  testing server changes through the bin.
+- The published bin points straight at `dist/cli.js` (shebang preserved by
+  `bun build`); rebuild before testing server changes through the bin.
 - Static asset changes under `public/` need no server restart.
 - The dev server typically runs under pm2 (`npx pm2 restart rork-local
 --update-env` from the project dir). serve-sim's native helper occasionally

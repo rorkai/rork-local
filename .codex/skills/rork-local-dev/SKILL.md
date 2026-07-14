@@ -28,7 +28,7 @@ public `skills/rork-local` skill; do not add internal dev workflows there.
    If it isn't registered yet:
 
    ```sh
-   ASC_BIN=/path/to/asc npx pm2 start bin/rork-local.mjs --name rork-local
+   ASC_BIN=/path/to/asc npx pm2 start dist/cli.js --name rork-local
    ```
 
    serve-sim's native helper occasionally segfaults right after startup; pm2
