@@ -10,8 +10,6 @@ in Cursor, Claude Code, or any browser-capable agent and iterate on your app end
   CLI by [Rudrank Riyam](https://github.com/rudrankriyam) (`asc publish`, `asc screenshots`,
   `asc web apps create`).
 
-![Rork Local — live iOS simulator in the browser with a Rork-style Publish flow](docs/screenshot.png)
-
 ![Rork Local with device list and simulator tools panels open](docs/screenshot-panels.png)
 
 _The device switcher and simulator tools panels come from serve-sim._
