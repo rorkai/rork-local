@@ -72,10 +72,12 @@ export function loadConfig(): ConfigValues {
   };
 }
 
-// Detection target. Precedence: rork.config.json projectDir > RORK_PROJECT env
-// > argv > cwd. Mutable at runtime via POST /api/config/project.
+// Detection target. Precedence: argv > RORK_PROJECT env > rork.config.json
+// projectDir > cwd — an explicit per-invocation choice always beats a value
+// persisted by an earlier session. Mutable at runtime via POST
+// /api/config/project.
 let projectDir = path.resolve(
-  readConfigFile().projectDir || process.env.RORK_PROJECT || process.argv[2] || WORK_DIR,
+  process.argv[2] || process.env.RORK_PROJECT || readConfigFile().projectDir || WORK_DIR,
 );
 
 export function getProjectDir(): string {
