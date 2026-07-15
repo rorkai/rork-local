@@ -22,7 +22,7 @@
     "asc"
   ],
   "scripts": {
-    "build": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external && tsc --emitDeclarationOnly",
+    "build": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external --tsconfig-override tsconfig.build.json && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "dev": "bun run src/cli.ts",
     "start": "node dist/cli.js",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "serve-sim": "latest"
+    "serve-sim": "^0.1.44"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
