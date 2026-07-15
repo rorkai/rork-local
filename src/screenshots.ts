@@ -1,10 +1,10 @@
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 
 import { ASC_BIN, WORK_DIR } from "./config.js";
-import { errorMessage, errorStderr, type ShotInfo } from "./types.js";
+import { errorMessage, errorStderr, type DeckFile, type ShotInfo } from "./types.js";
 
 const execFileP = promisify(execFile);
 
@@ -15,8 +15,11 @@ const execFileP = promisify(execFile);
 export const SHOTS_DIR = path.join(WORK_DIR, ".rork-local", "screenshots");
 export const RAW_DIR = path.join(SHOTS_DIR, "raw");
 export const FRAMED_DIR = path.join(SHOTS_DIR, "framed");
+export const LISTING_DIR = path.join(SHOTS_DIR, "listing");
+const DECK_PATH = path.join(SHOTS_DIR, "deck.json");
 mkdirSync(RAW_DIR, { recursive: true });
 mkdirSync(FRAMED_DIR, { recursive: true });
+mkdirSync(LISTING_DIR, { recursive: true });
 
 export const FRAME_DEVICES = [
   "iphone-air", "iphone-17-pro", "iphone-17-pro-max", "iphone-17", "iphone-16e",
@@ -45,6 +48,67 @@ export async function captureScreenshot(name: unknown): Promise<{ name: string; 
   const outPath = path.join(RAW_DIR, `${clean}.png`);
   await execFileP("xcrun", ["simctl", "io", "booted", "screenshot", outPath]);
   return { name: clean, file: `${clean}.png` };
+}
+
+/** Portrait App Store dimensions accepted per device type, per
+ * `asc screenshots sizes --all`. The editor validates exports against these
+ * so `asc screenshots upload` won't reject them. */
+export const SLIDE_DEVICE_SIZES: Record<string, Array<{ width: number; height: number }>> = {
+  IPHONE_69: [
+    { width: 1290, height: 2796 }, { width: 1260, height: 2736 }, { width: 1320, height: 2868 },
+  ],
+  IPHONE_67: [
+    { width: 1290, height: 2796 }, { width: 1260, height: 2736 }, { width: 1320, height: 2868 },
+  ],
+  IPHONE_65: [{ width: 1284, height: 2778 }, { width: 1242, height: 2688 }],
+  IPHONE_61: [{ width: 1179, height: 2556 }, { width: 1206, height: 2622 }],
+  IPAD_PRO_3GEN_129: [{ width: 2048, height: 2732 }, { width: 2064, height: 2752 }],
+};
+
+/** Width/height from a PNG buffer's IHDR chunk (no image library needed). */
+export function pngDimensions(buf: Buffer): { width: number; height: number } {
+  const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (buf.length < 24 || !sig.every((b, i) => buf[i] === b)) {
+    throw new Error("not a PNG file");
+  }
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+/** Validate + write an editor-exported slide PNG into the listing dir. */
+export function saveSlide(
+  name: unknown,
+  base64Png: string,
+  deviceType: string,
+): { name: string; file: string; width: number; height: number } {
+  const allowed = SLIDE_DEVICE_SIZES[deviceType];
+  if (!allowed) {
+    throw new Error(
+      `unknown device type: ${deviceType} (expected one of ${Object.keys(SLIDE_DEVICE_SIZES).join(", ")})`,
+    );
+  }
+  const data = base64Png.replace(/^data:image\/png;base64,/, "");
+  const buf = Buffer.from(data, "base64");
+  const { width, height } = pngDimensions(buf);
+  if (!allowed.some((d) => d.width === width && d.height === height)) {
+    const expect = allowed.map((d) => `${d.width}x${d.height}`).join(", ");
+    throw new Error(`slide is ${width}x${height}, but ${deviceType} accepts ${expect}`);
+  }
+  const clean = sanitizeShotName(name);
+  writeFileSync(path.join(LISTING_DIR, `${clean}.png`), buf);
+  return { name: clean, file: `${clean}.png`, width, height };
+}
+
+/** Editor deck state, persisted so reopening the editor restores slides. */
+export function readDeck(): DeckFile | null {
+  try {
+    return JSON.parse(readFileSync(DECK_PATH, "utf8")) as DeckFile;
+  } catch {
+    return null;
+  }
+}
+
+export function writeDeck(deck: DeckFile): void {
+  writeFileSync(DECK_PATH, JSON.stringify(deck));
 }
 
 export async function frameScreenshot(

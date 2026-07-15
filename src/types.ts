@@ -50,6 +50,14 @@ export type SimDevice = {
 
 export type ShotInfo = { name: string; file: string; mtime: number; size: number };
 
+/** Screenshot-editor deck state. The client owns the slide schema; the server
+ * only persists and returns it, so slides stay loosely typed. */
+export type DeckFile = {
+  deviceType: string;
+  selected?: number;
+  slides: unknown[];
+};
+
 export type AuthCheck = { ok: boolean; detail: string };
 
 export type PublishBody = {

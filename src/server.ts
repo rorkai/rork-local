@@ -11,8 +11,8 @@ import {
   attachSseClient, cancelJob, isJobRunning, jobStatus, startAscJob, startPublish,
 } from "./jobs.js";
 import {
-  FRAMED_DIR, FRAME_DEVICES, RAW_DIR, SHOTS_DIR,
-  captureScreenshot, frameScreenshot, listShots, sanitizeShotName,
+  FRAMED_DIR, FRAME_DEVICES, LISTING_DIR, RAW_DIR, SHOTS_DIR, SLIDE_DEVICE_SIZES,
+  captureScreenshot, frameScreenshot, listShots, readDeck, sanitizeShotName, saveSlide, writeDeck,
 } from "./screenshots.js";
 import { ensureBootedSimulator, listSimulators, startServeSimHelper } from "./sim.js";
 import { errorMessage, errorStderr, type AuthCheck, type PublishBody, type StatusResponse } from "./types.js";
@@ -24,7 +24,8 @@ const execFileP = promisify(execFile);
 // ---------------------------------------------------------------------------
 
 const app = express();
-app.use(express.json());
+// Editor slides arrive as base64 PNGs at App Store resolution (a few MB each).
+app.use(express.json({ limit: "40mb" }));
 
 const sim = simMiddleware({ basePath: "/.sim", proxyHelpers: true });
 app.use(sim);
@@ -167,9 +168,16 @@ app.post("/api/apps/create", (req, res) => {
 
 app.use("/shots/raw", express.static(RAW_DIR));
 app.use("/shots/framed", express.static(FRAMED_DIR));
+app.use("/shots/listing", express.static(LISTING_DIR));
 
 app.get("/api/screenshots", (_req, res) => {
-  res.json({ raw: listShots(RAW_DIR), framed: listShots(FRAMED_DIR), frameDevices: FRAME_DEVICES });
+  res.json({
+    raw: listShots(RAW_DIR),
+    framed: listShots(FRAMED_DIR),
+    listing: listShots(LISTING_DIR),
+    frameDevices: FRAME_DEVICES,
+    slideSizes: SLIDE_DEVICE_SIZES,
+  });
 });
 
 app.post("/api/screenshots/capture", async (req, res) => {
@@ -202,9 +210,49 @@ app.post("/api/screenshots/frame", async (req, res) => {
 
 app.delete("/api/screenshots/:kind/:name", (req, res) => {
   const { kind, name } = req.params;
-  const dir = kind === "framed" ? FRAMED_DIR : RAW_DIR;
+  const dir = kind === "framed" ? FRAMED_DIR : kind === "listing" ? LISTING_DIR : RAW_DIR;
   const file = path.join(dir, `${sanitizeShotName(name)}.png`);
   if (existsSync(file)) unlinkSync(file);
+  res.json({ ok: true });
+});
+
+// -- screenshot editor (slides) --
+
+// Save one editor-exported slide PNG into the listing dir. Dimensions are
+// validated against the device type so the App Store upload won't reject it.
+app.post("/api/screenshots/slide", (req, res) => {
+  const { name, png, deviceType = "IPHONE_65" } = (req.body ?? {}) as {
+    name?: string;
+    png?: string;
+    deviceType?: string;
+  };
+  if (!png) {
+    res.status(400).json({ error: "png (base64) is required" });
+    return;
+  }
+  try {
+    const slide = saveSlide(name || `slide-${Date.now()}`, png, deviceType);
+    res.json({ ok: true, slide });
+  } catch (err) {
+    res.status(400).json({ error: errorMessage(err) });
+  }
+});
+
+app.get("/api/screenshots/deck", (_req, res) => {
+  res.json({ deck: readDeck() });
+});
+
+app.put("/api/screenshots/deck", (req, res) => {
+  const body = (req.body ?? {}) as { deviceType?: string; selected?: number; slides?: unknown[] };
+  if (!Array.isArray(body.slides)) {
+    res.status(400).json({ error: "slides array is required" });
+    return;
+  }
+  writeDeck({
+    deviceType: String(body.deviceType || "IPHONE_65"),
+    selected: typeof body.selected === "number" ? body.selected : 0,
+    slides: body.slides,
+  });
   res.json({ ok: true });
 });
 
@@ -234,7 +282,7 @@ app.post("/api/screenshots/upload", (req, res) => {
     res.status(400).json({ error: "App Store version is required" });
     return;
   }
-  const dir = source === "raw" ? RAW_DIR : FRAMED_DIR;
+  const dir = source === "raw" ? RAW_DIR : source === "listing" ? LISTING_DIR : FRAMED_DIR;
   const shots = listShots(dir);
   if (shots.length === 0) {
     res.status(400).json({ error: `No ${source} screenshots to upload` });
