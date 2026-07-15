@@ -58,14 +58,44 @@ function detectFromExpo(dir: string): DetectHit {
   }
 }
 
+/** True for bundle IDs that belong to test targets ("….tests",
+ * "com.foo.MyAppTests"). Xcode declares PRODUCT_BUNDLE_IDENTIFIER for those
+ * too, and they can appear before the app target inside the pbxproj. */
+function isTestBundleId(id: string): boolean {
+  const last = id.split(".").pop() || "";
+  return /^(ui)?tests?$/i.test(last) || /Tests$/.test(last);
+}
+
+/** Pick the app target's bundle ID from all IDs found in a pbxproj: skip test
+ * bundles, then prefer the ID that prefixes the most siblings (helper targets
+ * like "app.foo.appinstaller" extend the root app's ID), shortest on ties. */
+function pickBundleId(ids: string[]): string {
+  const unique = [...new Set(ids)];
+  const nonTest = unique.filter((id) => !isTestBundleId(id));
+  const pool = nonTest.length > 0 ? nonTest : unique;
+  let best = "";
+  let bestScore = -1;
+  for (const id of pool) {
+    const score = pool.filter((other) => other !== id && other.startsWith(`${id}.`)).length;
+    if (score > bestScore || (score === bestScore && id.length < best.length)) {
+      best = id;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 function detectFromXcode(dir: string): DetectHit {
   for (const file of walkFiles(dir)) {
     if (!file.endsWith("project.pbxproj")) continue;
     try {
       const pbx = readFileSync(file, "utf8");
-      const bundleId = pbx.match(/PRODUCT_BUNDLE_IDENTIFIER = ([^;"]+);/)?.[1]?.trim() || "";
+      const ids = [...pbx.matchAll(/PRODUCT_BUNDLE_IDENTIFIER = ([^;"]+);/g)]
+        .map((m) => m[1].trim())
+        .filter((id) => id && !id.includes("$("));
+      const bundleId = pickBundleId(ids);
       const version = pbx.match(/MARKETING_VERSION = ([^;"]+);/)?.[1]?.trim() || "";
-      if (bundleId && !bundleId.includes("$(")) {
+      if (bundleId) {
         return { bundleId, version, source: path.relative(dir, file) };
       }
     } catch {
