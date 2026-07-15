@@ -127,7 +127,7 @@ detection):
 | Variable     | Purpose                          |
 | ------------ | -------------------------------- |
 | `PORT`       | HTTP port (default `3131`)       |
-| `RORK_HOST`  | Bind address (default `127.0.0.1`; set `0.0.0.0` to expose on the LAN) |
+| `RORK_HOST`  | Bind address (default `127.0.0.1`; `0.0.0.0` binds all IPv4 interfaces) |
 | `HOST`       | Fallback for `RORK_HOST` (which wins when both are set) |
 | `ASC_BIN`    | Path to the `asc` binary         |
 | `ASC_APP_ID` | Default App Store Connect app ID |
