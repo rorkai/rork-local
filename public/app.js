@@ -214,10 +214,15 @@ function applyAutofill(detected) {
     project.value = detected.projectDir;
   }
 
-  // Don't clobber groups fetched for a manually entered App ID with an empty
-  // detection result on the next status poll.
+  // Detection can describe a different app than a manual App ID. Keep the
+  // selected app's fetched groups until detection proves it describes that app.
   const detectedGroups = detected.betaGroups || [];
-  if (detectedGroups.length > 0 || !groupsFetchedFor) {
+  const selectedAppId = $("w-app").value.trim();
+  const detectedGroupsMatchSelection = Boolean(values.appId && values.appId === selectedAppId);
+  if (
+    (detectedGroups.length > 0 && detectedGroupsMatchSelection) ||
+    (detectedGroups.length === 0 && !groupsFetchedFor)
+  ) {
     const options = $("group-options");
     options.innerHTML = "";
     for (const name of detectedGroups) {

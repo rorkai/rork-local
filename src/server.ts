@@ -94,6 +94,10 @@ app.get("/api/groups", async (req, res) => {
     res.status(400).json({ error: "app query parameter is required" });
     return;
   }
+  if (!ASC_BIN) {
+    res.status(500).json({ error: "asc binary not found" });
+    return;
+  }
   try {
     res.json({ groups: await fetchBetaGroups(appId) });
   } catch (err) {

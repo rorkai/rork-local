@@ -62,9 +62,9 @@ curl -s localhost:3131/api/auth
 curl -s "localhost:3131/api/groups?app=6759231657"
 ```
 
-This endpoint returns `502` with `{ "error": "…" }` when the `asc` lookup
-fails, so callers can distinguish an app with no groups from a transient or
-authentication failure.
+This endpoint returns `500` when `asc` is not installed and `502` when an
+attempted `asc` lookup fails, so callers can distinguish an app with no groups
+from a local setup, transient, or authentication failure.
 
 `GET /api/status` → `{ device, asc, config, detected, job }`. `detected.values`
 holds the merged autofill (`appId`, `ipa`, `group`, `version`; explicit config
