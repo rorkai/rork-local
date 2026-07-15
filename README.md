@@ -54,7 +54,7 @@ screenshots in `<project>/.rork-local/screenshots/`.
 ## Publish flow (Rork-style)
 
 The **Publish** button opens a popover with an **App Store** section
-("Build and submit this app to TestFlight and the App Store"). **Submit to App Store**
+("Submit this app's signed build to TestFlight and the App Store"). **Submit to App Store**
 opens a bottom-sheet wizard with three steps, modeled on Rork's publish dialog:
 
 1. **App Info** — a **Project** field (edit it to re-point detection at another
