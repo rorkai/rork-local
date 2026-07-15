@@ -58,10 +58,20 @@ function resolveServeSimCli(): string | null {
     // The package's exports map doesn't expose ./package.json, so resolve a
     // real entry point and walk up to the package root from there.
     const middleware = require.resolve("serve-sim/middleware");
-    const pkgDir = path.resolve(path.dirname(middleware), "..");
+    let pkgDir = path.dirname(middleware);
+    while (pkgDir !== path.dirname(pkgDir)) {
+      const candidate = path.join(pkgDir, "package.json");
+      if (existsSync(candidate)) {
+        const metadata = JSON.parse(readFileSync(candidate, "utf8")) as { name?: string };
+        if (metadata.name === "serve-sim") break;
+      }
+      pkgDir = path.dirname(pkgDir);
+    }
     const pkg = JSON.parse(readFileSync(path.join(pkgDir, "package.json"), "utf8")) as {
+      name?: string;
       bin?: string | Record<string, string>;
     };
+    if (pkg.name !== "serve-sim") throw new Error("serve-sim package root not found");
     const rel = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.["serve-sim"];
     if (rel) {
       const cli = path.join(pkgDir, rel);
