@@ -191,23 +191,27 @@ app.post("/api/screenshots/capture", async (req, res) => {
 });
 
 app.post("/api/screenshots/frame", async (req, res) => {
-  if (!ASC_BIN) {
-    res.status(500).json({ error: "asc binary not found" });
-    return;
-  }
   const { name, device = "iphone-air", title } = (req.body ?? {}) as {
-    name?: string;
-    device?: string;
+    name?: unknown;
+    device?: unknown;
     title?: string;
   };
-  if (!name) {
+  if (typeof name !== "string" || !name.trim()) {
     // Without this, sanitizeShotName falls back to a generated shot-<ts> name
     // and the caller gets a baffling "raw screenshot not found: shot-…" 500.
     res.status(400).json({ error: "name is required (a raw screenshot's name)" });
     return;
   }
+  if (typeof device !== "string" || !FRAME_DEVICES.includes(device)) {
+    res.status(400).json({ error: `device must be one of: ${FRAME_DEVICES.join(", ")}` });
+    return;
+  }
+  if (!ASC_BIN) {
+    res.status(500).json({ error: "asc binary not found" });
+    return;
+  }
   try {
-    const result = await frameScreenshot(sanitizeShotName(name), device, title);
+    const result = await frameScreenshot(sanitizeShotName(name.trim()), device, title);
     res.json({ ok: true, result });
   } catch (err) {
     res.status(500).json({ error: errorMessage(err).split("\n").slice(0, 3).join(" ") });
