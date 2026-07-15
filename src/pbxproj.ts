@@ -55,7 +55,14 @@ function fallbackBundleId(source: string): string {
     const last = id.split(".").pop() || "";
     return !/^(ui)?tests?$/i.test(last) && !/Tests$/i.test(last);
   });
-  return nonTest[0] || "";
+  return nonTest
+    .map((id) => ({
+      id,
+      children: nonTest.filter((other) => other !== id && other.startsWith(`${id}.`)).length,
+    }))
+    .sort((left, right) =>
+      right.children - left.children || left.id.length - right.id.length || left.id.localeCompare(right.id)
+    )[0]?.id || "";
 }
 
 /** Reads settings from an application target rather than whichever build

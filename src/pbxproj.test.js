@@ -62,4 +62,13 @@ describe("detectXcodeBuildSettings", () => {
 
     expect(detectXcodeBuildSettings(source).bundleId).toBe("");
   });
+
+  test("ranks fallback candidates independently of source order", () => {
+    const source = `
+      PRODUCT_BUNDLE_IDENTIFIER = com.example.app.widget;
+      PRODUCT_BUNDLE_IDENTIFIER = com.example.app;
+    `;
+
+    expect(detectXcodeBuildSettings(source).bundleId).toBe("com.example.app");
+  });
 });
