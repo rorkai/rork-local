@@ -14,8 +14,9 @@ const execFileP = promisify(execFile);
 
 // State lives next to the app project (`<project>/.rork-local/screenshots`),
 // and the project dir can be re-pointed at runtime, so these are functions
-// rather than module constants. Directories are created on first use — not at
-// import time — so merely launching rork-local doesn't litter the project.
+// rather than module constants. The path helpers are pure; directories are
+// created only on the write paths (capture/frame/slide/deck save), so browsing
+// the UI or listing shots never litters the project with an empty .rork-local.
 function ensureDir(dir: string): string {
   mkdirSync(dir, { recursive: true });
   return dir;
@@ -25,16 +26,16 @@ export function shotsDir(): string {
   return path.join(getProjectDir(), ".rork-local", "screenshots");
 }
 export function rawDir(): string {
-  return ensureDir(path.join(shotsDir(), "raw"));
+  return path.join(shotsDir(), "raw");
 }
 export function framedDir(): string {
-  return ensureDir(path.join(shotsDir(), "framed"));
+  return path.join(shotsDir(), "framed");
 }
 export function listingDir(): string {
-  return ensureDir(path.join(shotsDir(), "listing"));
+  return path.join(shotsDir(), "listing");
 }
 function deckPath(): string {
-  return path.join(ensureDir(shotsDir()), "deck.json");
+  return path.join(shotsDir(), "deck.json");
 }
 
 export const FRAME_DEVICES = [
@@ -50,6 +51,7 @@ export function sanitizeShotName(name: unknown): string {
 }
 
 export function listShots(dir: string): ShotInfo[] {
+  if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith(".png"))
     .map((f) => {
@@ -61,7 +63,7 @@ export function listShots(dir: string): ShotInfo[] {
 
 export async function captureScreenshot(name: unknown): Promise<{ name: string; file: string }> {
   const clean = sanitizeShotName(name);
-  const outPath = path.join(rawDir(), `${clean}.png`);
+  const outPath = path.join(ensureDir(rawDir()), `${clean}.png`);
   await execFileP("xcrun", ["simctl", "io", "booted", "screenshot", outPath]);
   return { name: clean, file: `${clean}.png` };
 }
@@ -110,7 +112,7 @@ export function saveSlide(
     throw new Error(`slide is ${width}x${height}, but ${deviceType} accepts ${expect}`);
   }
   const clean = sanitizeShotName(name);
-  writeFileSync(path.join(listingDir(), `${clean}.png`), buf);
+  writeFileSync(path.join(ensureDir(listingDir()), `${clean}.png`), buf);
   return { name: clean, file: `${clean}.png`, width, height };
 }
 
@@ -124,6 +126,7 @@ export function readDeck(): DeckFile | null {
 }
 
 export function writeDeck(deck: DeckFile): void {
+  ensureDir(shotsDir());
   writeFileSync(deckPath(), JSON.stringify(deck));
 }
 
@@ -140,7 +143,7 @@ export async function frameScreenshot(
     "screenshots", "frame",
     "--input", input,
     "--device", device,
-    "--output-dir", framedDir(),
+    "--output-dir", ensureDir(framedDir()),
     "--output", "json",
   ];
   if (title) args.push("--title", title);
