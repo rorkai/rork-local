@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { ASC_BIN, getProjectDir, loadConfig } from "./config.js";
+import { detectXcodeBuildSettings } from "./pbxproj.js";
 import { errorMessage, type ConfigValues, type MergedDetection } from "./types.js";
 
 const execFileP = promisify(execFile);
@@ -63,9 +64,8 @@ function detectFromXcode(dir: string): DetectHit {
     if (!file.endsWith("project.pbxproj")) continue;
     try {
       const pbx = readFileSync(file, "utf8");
-      const bundleId = pbx.match(/PRODUCT_BUNDLE_IDENTIFIER = ([^;"]+);/)?.[1]?.trim() || "";
-      const version = pbx.match(/MARKETING_VERSION = ([^;"]+);/)?.[1]?.trim() || "";
-      if (bundleId && !bundleId.includes("$(")) {
+      const { bundleId, version } = detectXcodeBuildSettings(pbx);
+      if (bundleId) {
         return { bundleId, version, source: path.relative(dir, file) };
       }
     } catch {
