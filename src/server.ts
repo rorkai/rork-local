@@ -94,7 +94,11 @@ app.get("/api/groups", async (req, res) => {
     res.status(400).json({ error: "app query parameter is required" });
     return;
   }
-  res.json({ groups: await fetchBetaGroups(appId) });
+  try {
+    res.json({ groups: await fetchBetaGroups(appId) });
+  } catch (err) {
+    res.status(502).json({ error: errorMessage(err).split("\n")[0] });
+  }
 });
 
 async function apiKeyAuthStatus(): Promise<AuthCheck> {

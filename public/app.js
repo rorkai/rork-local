@@ -225,6 +225,7 @@ function applyAutofill(detected) {
       opt.value = name;
       options.appendChild(opt);
     }
+    if (detectedGroups.length > 0 && values.appId) groupsFetchedFor = values.appId;
   }
 
   $("w-hint").textContent = detected.found
@@ -264,6 +265,11 @@ let groupsFetchInFlight = "";
 async function refetchGroupsForAppId() {
   const appId = $("w-app").value.trim();
   if (!appId || appId === groupsFetchedFor || appId === groupsFetchInFlight) return;
+  // Group names are scoped to an ASC app. Keeping the previous app's value
+  // makes a valid-looking publish request target the wrong group.
+  $("group-options").innerHTML = "";
+  $("w-group").value = "";
+  groupsFetchedFor = "";
   groupsFetchInFlight = appId;
   try {
     const res = await fetch(`/api/groups?app=${encodeURIComponent(appId)}`);

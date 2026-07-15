@@ -126,23 +126,19 @@ async function resolveAppIdFromBundleId(bundleId: string): Promise<string> {
 }
 
 export async function fetchBetaGroups(appId: string): Promise<string[]> {
-  if (!ASC_BIN || !appId) return [];
-  try {
-    const { stdout } = await execFileP(
-      ASC_BIN,
-      ["testflight", "groups", "list", "--app", appId, "--paginate", "--output", "json"],
-      { timeout: 30000 },
-    );
-    const parsed = JSON.parse(stdout) as {
-      data?: Array<{ attributes?: { name?: string }; name?: string }>;
-    };
-    return (parsed.data || [])
-      .map((g) => g.attributes?.name || g.name || "")
-      .filter(Boolean);
-  } catch (err) {
-    console.warn(`[rork-local] beta group lookup failed (${errorMessage(err).split("\n")[0]})`);
-    return [];
-  }
+  if (!ASC_BIN) throw new Error("asc binary not found");
+  if (!appId) throw new Error("App Store Connect app ID is required");
+  const { stdout } = await execFileP(
+    ASC_BIN,
+    ["testflight", "groups", "list", "--app", appId, "--paginate", "--output", "json"],
+    { timeout: 30000 },
+  );
+  const parsed = JSON.parse(stdout) as {
+    data?: Array<{ attributes?: { name?: string }; name?: string }>;
+  };
+  return (parsed.data || [])
+    .map((g) => g.attributes?.name || g.name || "")
+    .filter(Boolean);
 }
 
 const DETECT_TTL_MS = 60000;
@@ -201,10 +197,18 @@ export async function refreshDetection({ force = false } = {}): Promise<DetectCa
     // effective app ID changes — never on routine status polls.
     const effectiveAppId = loadConfig().appId || detected.appId;
     if (effectiveAppId && (force || effectiveAppId !== detectCache.groupsForAppId)) {
-      detectCache.betaGroups = await fetchBetaGroups(effectiveAppId);
-      detectCache.groupsForAppId = effectiveAppId;
-      if (detectCache.betaGroups.length > 0) {
-        notes.push(`beta groups: ${detectCache.betaGroups.join(", ")}`);
+      if (effectiveAppId !== detectCache.groupsForAppId) {
+        detectCache.betaGroups = [];
+        detectCache.groupsForAppId = null;
+      }
+      try {
+        detectCache.betaGroups = await fetchBetaGroups(effectiveAppId);
+        detectCache.groupsForAppId = effectiveAppId;
+        if (detectCache.betaGroups.length > 0) {
+          notes.push(`beta groups: ${detectCache.betaGroups.join(", ")}`);
+        }
+      } catch (err) {
+        console.warn(`[rork-local] beta group lookup failed (${errorMessage(err).split("\n")[0]})`);
       }
     } else if (!effectiveAppId) {
       detectCache.betaGroups = [];
