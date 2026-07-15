@@ -57,6 +57,9 @@ curl -s -X POST localhost:3131/api/config/project \
 
 # Auth health: apiKey = `asc auth` (publishing), web = `asc web auth` (app creation)
 curl -s localhost:3131/api/auth
+
+# TestFlight beta groups for an explicit app ID → {"groups":["External Testers",…]}
+curl -s "localhost:3131/api/groups?app=6759231657"
 ```
 
 `GET /api/status` → `{ device, asc, config, detected, job }`. `detected.values`

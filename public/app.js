@@ -10,6 +10,8 @@ let wizardStep = 0;
 let authOk = null; // null = unknown, true/false after check (API key)
 let frameDevices = [];
 let lastDetected = null; // most recent merged detection from /api/status
+let simDeviceSlug = ""; // booted simulator name as a frame-device slug
+let frameDeviceTouched = false; // user picked a frame device manually
 
 const STEP_NAMES = ["App Info", "App Store Connect", "Submit"];
 
@@ -28,6 +30,14 @@ const PROGRESS_MAP = [
 
 function show(el) { el.classList.remove("hidden"); }
 function hide(el) { el.classList.add("hidden"); }
+
+/** Show an inline form error and make sure it's actually on screen — error
+ * elements can sit below the fold of a scrolled panel. */
+function showError(el, message) {
+  el.textContent = message;
+  show(el);
+  el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
 
 function appendLine(pre, line) {
   const span = document.createElement("span");
@@ -204,12 +214,17 @@ function applyAutofill(detected) {
     project.value = detected.projectDir;
   }
 
-  const options = $("group-options");
-  options.innerHTML = "";
-  for (const name of detected.betaGroups || []) {
-    const opt = document.createElement("option");
-    opt.value = name;
-    options.appendChild(opt);
+  // Don't clobber groups fetched for a manually entered App ID with an empty
+  // detection result on the next status poll.
+  const detectedGroups = detected.betaGroups || [];
+  if (detectedGroups.length > 0 || !groupsFetchedFor) {
+    const options = $("group-options");
+    options.innerHTML = "";
+    for (const name of detectedGroups) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      options.appendChild(opt);
+    }
   }
 
   $("w-hint").textContent = detected.found
@@ -240,6 +255,34 @@ async function submitProjectDir() {
     projectPosting = false;
   }
 }
+
+// Typing an App ID detection couldn't resolve should still surface the app's
+// TestFlight groups (the datalist + default) instead of blocking validation.
+let groupsFetchedFor = "";
+
+async function refetchGroupsForAppId() {
+  const appId = $("w-app").value.trim();
+  if (!appId || appId === groupsFetchedFor) return;
+  groupsFetchedFor = appId;
+  try {
+    const res = await fetch(`/api/groups?app=${encodeURIComponent(appId)}`);
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data.groups)) return;
+    const options = $("group-options");
+    options.innerHTML = "";
+    for (const name of data.groups) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      options.appendChild(opt);
+    }
+    const group = $("w-group");
+    if (!group.value && data.groups.length > 0) group.value = data.groups[0];
+  } catch {
+    /* offline or asc unavailable; validation copy already explains the manual path */
+  }
+}
+
+$("w-app").addEventListener("change", refetchGroupsForAppId);
 
 $("w-project").addEventListener("change", submitProjectDir);
 $("w-project").addEventListener("keydown", (e) => {
@@ -414,10 +457,9 @@ async function captureShot() {
     await postJSON("/api/screenshots/capture", { name: `shot-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}` });
     await refreshShots();
   } catch (err) {
-    sError.textContent = err.message;
-    show(sError);
     show(shotsPanel);
     show(shotsBackdrop);
+    showError(sError, err.message);
   }
 }
 
@@ -463,8 +505,7 @@ function shotCard({ kind, shot }) {
         });
         await refreshShots();
       } catch (err) {
-        sError.textContent = err.message;
-        show(sError);
+        showError(sError, err.message);
         frameBtn.textContent = "Frame";
         frameBtn.disabled = false;
       }
@@ -505,6 +546,8 @@ async function refreshShots() {
         opt.textContent = device;
         select.appendChild(opt);
       }
+      select.addEventListener("change", () => (frameDeviceTouched = true));
+      applyFrameDeviceDefault();
     }
 
     const rawGrid = $("raw-grid");
@@ -543,8 +586,7 @@ $("s-upload").addEventListener("click", async () => {
       source: shotsPanel.querySelector('input[name="s-source"]:checked').value,
     });
   } catch (err) {
-    sError.textContent = err.message;
-    show(sError);
+    showError(sError, err.message);
   }
 });
 
@@ -552,10 +594,21 @@ $("s-upload").addEventListener("click", async () => {
 // status + SSE
 // ---------------------------------------------------------------------------
 
+/** Default the frame bezel to the booted simulator ("iPhone 17 Pro" →
+ * "iphone-17-pro") until the user picks one themselves. */
+function applyFrameDeviceDefault() {
+  if (frameDeviceTouched || !simDeviceSlug || frameDevices.length === 0) return;
+  if (frameDevices.includes(simDeviceSlug)) $("frame-device").value = simDeviceSlug;
+}
+
 async function loadStatus() {
   try {
     const res = await fetch("/api/status");
     const status = await res.json();
+    if (status.device?.name) {
+      simDeviceSlug = status.device.name.toLowerCase().replace(/\s+/g, "-");
+      applyFrameDeviceDefault();
+    }
     applyAutofill(status.detected);
     applyJobStatus(status.job);
   } catch {

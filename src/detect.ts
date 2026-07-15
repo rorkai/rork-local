@@ -125,7 +125,7 @@ async function resolveAppIdFromBundleId(bundleId: string): Promise<string> {
   }
 }
 
-async function fetchBetaGroups(appId: string): Promise<string[]> {
+export async function fetchBetaGroups(appId: string): Promise<string[]> {
   if (!ASC_BIN || !appId) return [];
   try {
     const { stdout } = await execFileP(
