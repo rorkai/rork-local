@@ -48,10 +48,26 @@ export async function ensureBootedSimulator(): Promise<SimDevice> {
   return { ...candidate, state: "Booted" };
 }
 
+function readServeSimCli(pkgDir: string): string | null {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(pkgDir, "package.json"), "utf8")) as {
+      name?: string;
+      bin?: string | Record<string, string>;
+    };
+    if (pkg.name !== "serve-sim") return null;
+    const rel = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.["serve-sim"];
+    if (!rel) return null;
+    const cli = path.join(pkgDir, rel);
+    return existsSync(cli) ? cli : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Locate serve-sim's CLI entry. Under npm's flat install (npx, global
  * installs) serve-sim is a sibling of this package, so PKG_DIR/node_modules
  * only exists in a dev checkout — resolve through the module system and read
- * the bin field instead, falling back to the local .bin shim. */
+ * the bin field instead, falling back to local package metadata. */
 function resolveServeSimCli(): string | null {
   try {
     const require = createRequire(import.meta.url);
@@ -67,21 +83,14 @@ function resolveServeSimCli(): string | null {
       }
       pkgDir = path.dirname(pkgDir);
     }
-    const pkg = JSON.parse(readFileSync(path.join(pkgDir, "package.json"), "utf8")) as {
-      name?: string;
-      bin?: string | Record<string, string>;
-    };
-    if (pkg.name !== "serve-sim") throw new Error("serve-sim package root not found");
-    const rel = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.["serve-sim"];
-    if (rel) {
-      const cli = path.join(pkgDir, rel);
-      if (existsSync(cli)) return cli;
-    }
+    const cli = readServeSimCli(pkgDir);
+    if (cli) return cli;
   } catch {
-    /* fall through to the dev-checkout shim */
+    /* fall through to the dev-checkout package */
   }
-  const local = path.join(PKG_DIR, "node_modules", ".bin", "serve-sim");
-  return existsSync(local) ? local : null;
+  // Reading the package's bin target avoids passing npm's platform-specific
+  // .bin shell/cmd shim to Node as though the shim itself were JavaScript.
+  return readServeSimCli(path.join(PKG_DIR, "node_modules", "serve-sim"));
 }
 
 /** Start serve-sim's detached helper (owns the device stream). */
