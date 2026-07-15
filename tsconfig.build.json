@@ -1,0 +1,11 @@
+{
+  // Used only by `bun build` (see the build script). The base tsconfig maps
+  // "serve-sim/middleware" to a local .d.ts so tsc can typecheck against it,
+  // but bun build honors that mapping too and would bundle the declaration
+  // file as the runtime module. Clearing `paths` here lets the bundler
+  // resolve the real package entry while tsc keeps using the shim.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {}
+  }
+}
