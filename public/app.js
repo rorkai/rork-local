@@ -264,12 +264,14 @@ let groupsFetchInFlight = "";
 
 async function refetchGroupsForAppId() {
   const appId = $("w-app").value.trim();
+  if (appId !== groupsFetchedFor) {
+    // Group names are scoped to an ASC app. Keeping the previous app's value
+    // makes a valid-looking publish request target the wrong group.
+    $("group-options").innerHTML = "";
+    $("w-group").value = "";
+    groupsFetchedFor = "";
+  }
   if (!appId || appId === groupsFetchedFor || appId === groupsFetchInFlight) return;
-  // Group names are scoped to an ASC app. Keeping the previous app's value
-  // makes a valid-looking publish request target the wrong group.
-  $("group-options").innerHTML = "";
-  $("w-group").value = "";
-  groupsFetchedFor = "";
   groupsFetchInFlight = appId;
   try {
     const res = await fetch(`/api/groups?app=${encodeURIComponent(appId)}`);
