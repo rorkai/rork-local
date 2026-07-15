@@ -361,7 +361,9 @@ export async function main(): Promise<void> {
   await startServeSimHelper();
 
   const server = app.listen(PORT, HOST, () => {
-    console.log(`\n  Rork Local ready → http://localhost:${PORT}\n`);
+    // Surface a non-default bind so an env-driven rebind is never silent.
+    const bound = HOST === "127.0.0.1" ? "" : `  (listening on ${HOST})`;
+    console.log(`\n  Rork Local ready → http://localhost:${PORT}${bound}\n`);
   });
   server.on("upgrade", (req, socket, head) => sim.handleUpgrade(req, socket, head));
 }
