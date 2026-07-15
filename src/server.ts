@@ -12,7 +12,7 @@ import {
 } from "./jobs.js";
 import {
   FRAMED_DIR, FRAME_DEVICES, LISTING_DIR, RAW_DIR, SHOTS_DIR, SLIDE_DEVICE_SIZES,
-  captureScreenshot, frameScreenshot, listShots, readDeck, sanitizeShotName, saveSlide, writeDeck,
+  captureScreenshot, frameScreenshot, listShots, normalizeShotName, readDeck, sanitizeShotName, saveSlide, writeDeck,
 } from "./screenshots.js";
 import { ensureBootedSimulator, listSimulators, startServeSimHelper } from "./sim.js";
 import { errorMessage, errorStderr, type AuthCheck, type PublishBody, type StatusResponse } from "./types.js";
@@ -194,9 +194,10 @@ app.post("/api/screenshots/frame", async (req, res) => {
   const { name, device = "iphone-air", title } = (req.body ?? {}) as {
     name?: unknown;
     device?: unknown;
-    title?: string;
+    title?: unknown;
   };
-  if (typeof name !== "string" || !name.trim()) {
+  const normalizedName = typeof name === "string" ? normalizeShotName(name.trim()) : "";
+  if (!normalizedName) {
     // Without this, sanitizeShotName falls back to a generated shot-<ts> name
     // and the caller gets a baffling "raw screenshot not found: shot-…" 500.
     res.status(400).json({ error: "name is required (a raw screenshot's name)" });
@@ -206,12 +207,16 @@ app.post("/api/screenshots/frame", async (req, res) => {
     res.status(400).json({ error: `device must be one of: ${FRAME_DEVICES.join(", ")}` });
     return;
   }
+  if (title !== undefined && typeof title !== "string") {
+    res.status(400).json({ error: "title must be a string" });
+    return;
+  }
   if (!ASC_BIN) {
     res.status(500).json({ error: "asc binary not found" });
     return;
   }
   try {
-    const result = await frameScreenshot(sanitizeShotName(name.trim()), device, title);
+    const result = await frameScreenshot(normalizedName, device, title);
     res.json({ ok: true, result });
   } catch (err) {
     res.status(500).json({ error: errorMessage(err).split("\n").slice(0, 3).join(" ") });

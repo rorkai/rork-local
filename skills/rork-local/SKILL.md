@@ -120,8 +120,9 @@ curl -s -X POST localhost:3131/api/screenshots/upload \
 Image files are served at `/shots/raw/<file>.png`, `/shots/framed/<file>.png`,
 and `/shots/listing/<file>.png`.
 
-The frame endpoint returns `400` when `name` is blank or `device` is not one
-of the values returned by `GET /api/screenshots` in `frameDevices`.
+The frame endpoint returns `400` when `name` is blank or sanitizes to an empty
+filename, `title` is present but is not a string, or `device` is not one of the
+values returned by `GET /api/screenshots` in `frameDevices`.
 
 ### Screenshot editor slides
 

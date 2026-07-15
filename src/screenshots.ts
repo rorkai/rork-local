@@ -25,12 +25,15 @@ export const FRAME_DEVICES = [
   "iphone-air", "iphone-17-pro", "iphone-17-pro-max", "iphone-17", "iphone-16e",
 ];
 
-export function sanitizeShotName(name: unknown): string {
-  const clean = String(name || "")
+export function normalizeShotName(name: unknown): string {
+  return String(name || "")
     .toLowerCase()
     .replace(/[^a-z0-9-_]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return clean || `shot-${Date.now()}`;
+}
+
+export function sanitizeShotName(name: unknown): string {
+  return normalizeShotName(name) || `shot-${Date.now()}`;
 }
 
 export function listShots(dir: string): ShotInfo[] {
