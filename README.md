@@ -79,10 +79,16 @@ The screenshots panel lets you:
 - **Frame** them into Apple device bezels (`asc screenshots frame`, Koubou-powered;
   devices: iphone-air, iphone-17-pro, iphone-17-pro-max, iphone-17, iphone-16e),
   producing App-Store-ready sizes (e.g. 1206×2622 → `IPHONE_61`)
-- **Accept & Upload** framed (or raw) shots to your App Store listing via
-  `asc screenshots upload --app … --version … --device-type …`
+- **Edit** captures in the built-in slide editor: canvas presets for the App
+  Store sizes (iPhone 6.9″/6.5″/6.1″, iPad 12.9″), solid or gradient
+  backgrounds, a headline with color/size/position controls, and the capture
+  composed in a clean device bezel you can drag and resize — with a deck strip
+  to reorder, duplicate, and delete slides. Exports are pixel-exact PNGs
+  validated against the chosen device type.
+- **Accept & Upload** framed, raw, or editor-made slides to your App Store
+  listing via `asc screenshots upload --app … --version … --device-type …`
 
-Files live in `.rork-local/screenshots/raw/` and `.rork-local/screenshots/framed/`
+Files live in `.rork-local/screenshots/raw/`, `…/framed/`, and `…/listing/`
 inside your project.
 
 ## Auto-detected defaults

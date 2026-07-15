@@ -94,7 +94,8 @@ want to hold the SSE stream open.
 ### Screenshots
 
 ```sh
-# List raw + framed screenshots and the supported frame devices
+# List raw, framed, and listing (editor-made) screenshots, the supported frame
+# devices, and the valid slide dimensions per App Store device type
 curl -s localhost:3131/api/screenshots
 
 # Capture the booted simulator's screen (name optional)
@@ -106,16 +107,43 @@ curl -s -X POST localhost:3131/api/screenshots/frame \
   -H 'content-type: application/json' \
   -d '{"name":"home","device":"iphone-17-pro","title":"Track everything"}'
 
-# Delete a screenshot (kind: raw | framed)
+# Delete a screenshot (kind: raw | framed | listing)
 curl -s -X DELETE localhost:3131/api/screenshots/raw/home
 
-# Upload framed (or raw) shots to an App Store version (runs as a job)
+# Upload shots to an App Store version (runs as a job).
+# source: framed | raw | listing (slides exported from the screenshot editor)
 curl -s -X POST localhost:3131/api/screenshots/upload \
   -H 'content-type: application/json' \
   -d '{"appId":"6759231657","version":"1.2.0","deviceType":"IPHONE_61","source":"framed"}'
 ```
 
-Image files are served at `/shots/raw/<file>.png` and `/shots/framed/<file>.png`.
+Image files are served at `/shots/raw/<file>.png`, `/shots/framed/<file>.png`,
+and `/shots/listing/<file>.png`.
+
+### Screenshot editor slides
+
+The web UI ships a manual slide editor (screenshots drawer → "Open editor"):
+background + headline + device-framed capture composed on a canvas at exact
+App Store resolution. Its API surface:
+
+```sh
+# Save one exported slide PNG (base64 or data URL) into the listing set.
+# The PNG's dimensions must match the device type (see slideSizes in
+# GET /api/screenshots) or the request is rejected with 400.
+curl -s -X POST localhost:3131/api/screenshots/slide \
+  -H 'content-type: application/json' \
+  -d "{\"name\":\"slide-01\",\"deviceType\":\"IPHONE_65\",\"png\":\"$(base64 -i slide.png)\"}"
+
+# Read / persist the editor deck state (slides layout JSON; the client owns
+# the slide schema — the server just stores it)
+curl -s localhost:3131/api/screenshots/deck
+curl -s -X PUT localhost:3131/api/screenshots/deck \
+  -H 'content-type: application/json' \
+  -d '{"deviceType":"IPHONE_65","selected":0,"slides":[]}'
+```
+
+Saved slides upload with `POST /api/screenshots/upload` using
+`"source":"listing"` and the matching `deviceType`.
 
 ### First publish (no App Store Connect app yet)
 
