@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "serve-sim": "latest"
+    "serve-sim": "^0.1.44"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
