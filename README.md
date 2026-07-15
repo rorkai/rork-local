@@ -48,8 +48,9 @@ On startup the server:
 3. Starts the `serve-sim` streaming helper in the background.
 4. Serves the UI on `http://localhost:3131` with the simulator mounted at `/.sim`.
 
-Mutable state lives next to your app: overrides in `<project>/rork.config.json`,
-screenshots in `<project>/.rork-local/screenshots/`.
+Screenshots and editor state live next to your app in
+`<project>/.rork-local/`; `rork.config.json` overrides are read from the
+directory you launch rork-local in (usually your app's directory).
 
 ## Publish flow (Rork-style)
 
@@ -101,8 +102,9 @@ The server continuously scans the project directory and pre-fills the forms:
   `asc apps list --bundle-id …` (requires `asc auth login`)
 - **Beta groups**: fetched via `asc testflight groups list --app …`
 
-The project directory resolves in this order: `projectDir` in `rork.config.json` →
-`RORK_PROJECT` env → CLI argument → current working directory. Change it live from
+The project directory resolves in this order: CLI argument → `RORK_PROJECT`
+env → `projectDir` in `rork.config.json` → current working directory (an
+explicit per-invocation choice beats a persisted one). Change it live from
 the wizard's Project field.
 
 ## Defaults

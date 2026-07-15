@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { ASC_BIN, WORK_DIR } from "./config.js";
+import { ASC_BIN, getProjectDir } from "./config.js";
 import { errorMessage, errorStderr, type DeckFile, type ShotInfo } from "./types.js";
 
 const execFileP = promisify(execFile);
@@ -12,14 +12,30 @@ const execFileP = promisify(execFile);
 // Screenshots (capture via simctl, frame + upload via asc)
 // ---------------------------------------------------------------------------
 
-export const SHOTS_DIR = path.join(WORK_DIR, ".rork-local", "screenshots");
-export const RAW_DIR = path.join(SHOTS_DIR, "raw");
-export const FRAMED_DIR = path.join(SHOTS_DIR, "framed");
-export const LISTING_DIR = path.join(SHOTS_DIR, "listing");
-const DECK_PATH = path.join(SHOTS_DIR, "deck.json");
-mkdirSync(RAW_DIR, { recursive: true });
-mkdirSync(FRAMED_DIR, { recursive: true });
-mkdirSync(LISTING_DIR, { recursive: true });
+// State lives next to the app project (`<project>/.rork-local/screenshots`),
+// and the project dir can be re-pointed at runtime, so these are functions
+// rather than module constants. Directories are created on first use — not at
+// import time — so merely launching rork-local doesn't litter the project.
+function ensureDir(dir: string): string {
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+export function shotsDir(): string {
+  return path.join(getProjectDir(), ".rork-local", "screenshots");
+}
+export function rawDir(): string {
+  return ensureDir(path.join(shotsDir(), "raw"));
+}
+export function framedDir(): string {
+  return ensureDir(path.join(shotsDir(), "framed"));
+}
+export function listingDir(): string {
+  return ensureDir(path.join(shotsDir(), "listing"));
+}
+function deckPath(): string {
+  return path.join(ensureDir(shotsDir()), "deck.json");
+}
 
 export const FRAME_DEVICES = [
   "iphone-air", "iphone-17-pro", "iphone-17-pro-max", "iphone-17", "iphone-16e",
@@ -45,7 +61,7 @@ export function listShots(dir: string): ShotInfo[] {
 
 export async function captureScreenshot(name: unknown): Promise<{ name: string; file: string }> {
   const clean = sanitizeShotName(name);
-  const outPath = path.join(RAW_DIR, `${clean}.png`);
+  const outPath = path.join(rawDir(), `${clean}.png`);
   await execFileP("xcrun", ["simctl", "io", "booted", "screenshot", outPath]);
   return { name: clean, file: `${clean}.png` };
 }
@@ -94,21 +110,21 @@ export function saveSlide(
     throw new Error(`slide is ${width}x${height}, but ${deviceType} accepts ${expect}`);
   }
   const clean = sanitizeShotName(name);
-  writeFileSync(path.join(LISTING_DIR, `${clean}.png`), buf);
+  writeFileSync(path.join(listingDir(), `${clean}.png`), buf);
   return { name: clean, file: `${clean}.png`, width, height };
 }
 
 /** Editor deck state, persisted so reopening the editor restores slides. */
 export function readDeck(): DeckFile | null {
   try {
-    return JSON.parse(readFileSync(DECK_PATH, "utf8")) as DeckFile;
+    return JSON.parse(readFileSync(deckPath(), "utf8")) as DeckFile;
   } catch {
     return null;
   }
 }
 
 export function writeDeck(deck: DeckFile): void {
-  writeFileSync(DECK_PATH, JSON.stringify(deck));
+  writeFileSync(deckPath(), JSON.stringify(deck));
 }
 
 export async function frameScreenshot(
@@ -116,7 +132,7 @@ export async function frameScreenshot(
   device: string,
   title?: string,
 ): Promise<{ name: string; device: string; stdout: string; stderr: string }> {
-  const input = path.join(RAW_DIR, `${name}.png`);
+  const input = path.join(rawDir(), `${name}.png`);
   if (!existsSync(input)) throw new Error(`raw screenshot not found: ${name}`);
   if (!FRAME_DEVICES.includes(device)) throw new Error(`unknown frame device: ${device}`);
   if (!ASC_BIN) throw new Error("asc binary not found");
@@ -124,7 +140,7 @@ export async function frameScreenshot(
     "screenshots", "frame",
     "--input", input,
     "--device", device,
-    "--output-dir", FRAMED_DIR,
+    "--output-dir", framedDir(),
     "--output", "json",
   ];
   if (title) args.push("--title", title);

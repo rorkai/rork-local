@@ -32,8 +32,9 @@ npx rork-local /path/to/app-project  # explicit project dir
 
 Startup boots a simulator if none is running, starts the serve-sim helper, and
 auto-detects publish config (bundle ID, version, newest .ipa, ASC app ID, beta
-groups) from the project. User overrides live in `<project>/rork.config.json`;
-mutable state (screenshots) lives in `<project>/.rork-local/`.
+groups) from the project. User overrides live in `rork.config.json` in the
+directory rork-local was launched from; screenshots and editor state live in
+`<project>/.rork-local/`.
 
 The UI at `/` embeds the simulator (`/.sim`), a Publish popover, an App Store
 submission wizard, and a Screenshots panel.
