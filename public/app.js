@@ -655,7 +655,7 @@ function hideServeSimBranding() {
       const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT);
       while (walker.nextNode()) {
         const el = walker.currentNode;
-        // Only hide small leaf-ish elements that are exactly the wordmark,
+        // Only touch small leaf-ish elements whose text is exactly the target,
         // never a container that happens to include the text.
         if (el.childElementCount > 1) continue;
         const text = (el.textContent || "").trim().toLowerCase();
@@ -666,6 +666,12 @@ function hideServeSimBranding() {
           } else {
             el.style.visibility = "hidden";
           }
+        } else if (text === "ax tree" && el.childElementCount === 0) {
+          // Tools-panel section header (literal "AX Tree", uppercased by CSS).
+          // Mutate the existing text node instead of textContent so React's
+          // reference to the node stays valid across re-renders.
+          const node = el.firstChild;
+          if (node && node.nodeType === Node.TEXT_NODE) node.nodeValue = "Element selector";
         }
       }
     } catch {
