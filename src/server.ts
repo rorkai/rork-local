@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import express from "express";
 import { simMiddleware } from "serve-sim/middleware";
 
-import { ASC_BIN, PKG_DIR, PORT, getProjectDir, loadConfig, setProjectDir } from "./config.js";
+import { ASC_BIN, HOST, PKG_DIR, PORT, getProjectDir, loadConfig, setProjectDir } from "./config.js";
 import { mergedDetection, refreshDetection, warmDetection } from "./detect.js";
 import {
   attachSseClient, cancelJob, isJobRunning, jobStatus, startAscJob, startPublish,
@@ -200,6 +200,12 @@ app.post("/api/screenshots/frame", async (req, res) => {
     device?: string;
     title?: string;
   };
+  if (!name) {
+    // Without this, sanitizeShotName falls back to a generated shot-<ts> name
+    // and the caller gets a baffling "raw screenshot not found: shot-…" 500.
+    res.status(400).json({ error: "name is required (a raw screenshot's name)" });
+    return;
+  }
   try {
     const result = await frameScreenshot(sanitizeShotName(name), device, title);
     res.json({ ok: true, result });
@@ -354,7 +360,7 @@ export async function main(): Promise<void> {
   await warmDetection();
   await startServeSimHelper();
 
-  const server = app.listen(PORT, () => {
+  const server = app.listen(PORT, HOST, () => {
     console.log(`\n  Rork Local ready → http://localhost:${PORT}\n`);
   });
   server.on("upgrade", (req, socket, head) => sim.handleUpgrade(req, socket, head));

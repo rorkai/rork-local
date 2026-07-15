@@ -127,9 +127,14 @@ detection):
 | Variable     | Purpose                          |
 | ------------ | -------------------------------- |
 | `PORT`       | HTTP port (default `3131`)       |
+| `HOST`       | Bind address (default `127.0.0.1`; set `0.0.0.0` to expose on the LAN) |
 | `ASC_BIN`    | Path to the `asc` binary         |
 | `ASC_APP_ID` | Default App Store Connect app ID |
 | `RORK_PROJECT` | App codebase to auto-detect publish settings from (default: cwd) |
+
+The server binds to loopback only by default — the API can publish builds
+with your App Store Connect credentials, so don't expose it beyond your
+machine unless you know what you're doing.
 
 ## Agent Skill
 

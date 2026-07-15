@@ -17,6 +17,11 @@ export const CONFIG_PATH = path.join(WORK_DIR, "rork.config.json");
 
 export const PORT = Number(process.env.PORT || 3131);
 
+/** Bind to loopback by default: the API can publish builds and run asc jobs
+ * with the user's credentials, so it should not be reachable from the LAN
+ * unless explicitly requested (HOST=0.0.0.0). */
+export const HOST = process.env.HOST || "127.0.0.1";
+
 export const PREFERRED_DEVICES = [
   "iPhone 17 Pro",
   "iPhone 16 Pro",

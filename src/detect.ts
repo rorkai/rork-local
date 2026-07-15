@@ -147,6 +147,8 @@ async function fetchBetaGroups(appId: string): Promise<string[]> {
 
 const DETECT_TTL_MS = 60000;
 
+let lastLoggedDetection = "";
+
 type DetectCache = {
   detected: ConfigValues;
   bundleId: string;
@@ -212,11 +214,17 @@ export async function refreshDetection({ force = false } = {}): Promise<DetectCa
     }
     detected.group = detectCache.betaGroups[0] || "";
 
+    const summary = `[rork-local] detection (${projectDir}): ${notes.join("; ") || "nothing found"}`;
+    // Refresh runs on every status poll once the TTL lapses; only log when
+    // the outcome actually changed so long-running servers stay quiet.
+    if (summary !== lastLoggedDetection) {
+      console.log(summary);
+      lastLoggedDetection = summary;
+    }
     detectCache.detected = detected;
     detectCache.bundleId = bundleId;
     detectCache.notes = notes;
     detectCache.at = Date.now();
-    console.log(`[rork-local] detection (${projectDir}): ${notes.join("; ") || "nothing found"}`);
     return detectCache;
   })();
   // Clear via .finally, never inside the runner: a scan with no async work

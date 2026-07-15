@@ -68,7 +68,9 @@ export function isJobRunning(): boolean {
 export function cancelJob(): boolean {
   if (job.proc) {
     job.proc.kill("SIGTERM");
-    pushLine("info", "Publish cancelled by user.");
+    // Not always a publish — the same runner handles screenshot uploads and
+    // app creation.
+    pushLine("info", "Job cancelled by user.");
     return true;
   }
   return false;
