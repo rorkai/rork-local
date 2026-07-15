@@ -1,11 +1,12 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "rork-local",
       "dependencies": {
         "express": "^5.1.0",
-        "serve-sim": "latest",
+        "serve-sim": "^0.1.44",
       },
       "devDependencies": {
         "@types/express": "^5.0.6",

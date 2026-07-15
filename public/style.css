@@ -509,7 +509,26 @@ body { display: flex; flex-direction: column; }
   gap: 3px;
 }
 .segmented label { position: relative; }
-.segmented input { position: absolute; opacity: 0; inset: 0; }
+/* Visually hidden but kept in the accessibility tree — Chromium drops
+ * opacity:0 elements from it, which hid these radios from screen readers
+ * and browser-driving agents. */
+.segmented input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--ring, #fff);
+  outline-offset: -2px;
+}
+/* The checked segment's background is #fff — a white ring would vanish on it,
+ * and arrow-key focus in a radio group lands on the checked item. */
+.segmented input:focus-visible:checked + span { outline-color: #000; }
 .segmented span {
   display: block;
   text-align: center;

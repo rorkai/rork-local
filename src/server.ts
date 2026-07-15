@@ -6,7 +6,7 @@ import express from "express";
 import { simMiddleware } from "serve-sim/middleware";
 
 import { ASC_BIN, HOST, PKG_DIR, PORT, getProjectDir, loadConfig, setProjectDir } from "./config.js";
-import { mergedDetection, refreshDetection, warmDetection } from "./detect.js";
+import { fetchBetaGroups, mergedDetection, refreshDetection, warmDetection } from "./detect.js";
 import {
   attachSseClient, cancelJob, isJobRunning, jobStatus, startAscJob, startPublish,
 } from "./jobs.js";
@@ -83,6 +83,26 @@ app.post("/api/config/project", async (req, res) => {
   }
   await refreshDetection({ force: true }).catch(() => {});
   res.json({ ok: true, projectDir: getProjectDir(), detected: mergedDetection() });
+});
+
+// Beta groups for an explicit app ID — the wizard calls this when the user
+// types an App ID that detection didn't resolve, so TestFlight validation can
+// still offer the app's real groups.
+app.get("/api/groups", async (req, res) => {
+  const appId = String(req.query.app || "").trim();
+  if (!appId) {
+    res.status(400).json({ error: "app query parameter is required" });
+    return;
+  }
+  if (!ASC_BIN) {
+    res.status(500).json({ error: "asc binary not found" });
+    return;
+  }
+  try {
+    res.json({ groups: await fetchBetaGroups(appId) });
+  } catch (err) {
+    res.status(502).json({ error: errorMessage(err).split("\n")[0] });
+  }
 });
 
 async function apiKeyAuthStatus(): Promise<AuthCheck> {
