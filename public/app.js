@@ -259,15 +259,20 @@ async function submitProjectDir() {
 // Typing an App ID detection couldn't resolve should still surface the app's
 // TestFlight groups (the datalist + default) instead of blocking validation.
 let groupsFetchedFor = "";
+let groupsFetchInFlight = "";
 
 async function refetchGroupsForAppId() {
   const appId = $("w-app").value.trim();
-  if (!appId || appId === groupsFetchedFor) return;
-  groupsFetchedFor = appId;
+  if (!appId || appId === groupsFetchedFor || appId === groupsFetchInFlight) return;
+  groupsFetchInFlight = appId;
   try {
     const res = await fetch(`/api/groups?app=${encodeURIComponent(appId)}`);
     const data = await res.json();
     if (!res.ok || !Array.isArray(data.groups)) return;
+    // Discard responses that arrive after the App ID changed again.
+    if ($("w-app").value.trim() !== appId) return;
+    // Cache only on success so a failed lookup retries on the next change.
+    groupsFetchedFor = appId;
     const options = $("group-options");
     options.innerHTML = "";
     for (const name of data.groups) {
@@ -279,6 +284,8 @@ async function refetchGroupsForAppId() {
     if (!group.value && data.groups.length > 0) group.value = data.groups[0];
   } catch {
     /* offline or asc unavailable; validation copy already explains the manual path */
+  } finally {
+    if (groupsFetchInFlight === appId) groupsFetchInFlight = "";
   }
 }
 
