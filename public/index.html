@@ -231,6 +231,17 @@
         <div id="framed-grid" class="shot-grid"></div>
       </div>
 
+      <div class="shots-group">
+        <div class="group-title-row">
+          <div class="group-title">Listing slides <span id="listing-empty" class="group-empty">— design in the editor</span></div>
+          <button id="open-editor-btn" class="detect-btn" type="button">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            Open editor
+          </button>
+        </div>
+        <div id="listing-grid" class="shot-grid"></div>
+      </div>
+
       <div class="shots-group upload-group">
         <div class="group-title">Upload to App Store</div>
         <div class="upload-form">
@@ -248,6 +259,7 @@
           <div class="segmented small">
             <label><input type="radio" name="s-source" value="framed" checked /><span>Framed</span></label>
             <label><input type="radio" name="s-source" value="raw" /><span>Raw</span></label>
+            <label><input type="radio" name="s-source" value="listing" /><span>Slides</span></label>
           </div>
           <button id="s-upload" class="cta-btn">Accept &amp; Upload</button>
           <p id="s-error" class="form-error hidden"></p>
@@ -257,6 +269,87 @@
     </div>
   </aside>
 
+  <!-- ================= Screenshot editor ================= -->
+  <div id="editor" class="editor hidden" role="dialog" aria-label="Screenshot editor">
+    <div class="editor-surface">
+      <div class="editor-header">
+        <div class="sheet-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          Screenshot Editor
+        </div>
+        <div class="editor-header-actions">
+          <select id="ed-preset" class="mini-select tall" title="Canvas size"></select>
+          <button id="ed-save" class="cta-btn small-btn">Save slides</button>
+          <button id="ed-close" class="icon-btn" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="editor-body">
+        <aside class="editor-deck">
+          <div id="ed-strip" class="ed-strip"></div>
+          <button id="ed-add" class="ghost-btn ed-add" type="button">+ Add slide</button>
+        </aside>
+        <div class="editor-stage">
+          <canvas id="ed-canvas"></canvas>
+          <div id="ed-drag-hint" class="ed-drag-hint">drag to move the device · scroll to resize</div>
+        </div>
+        <aside class="editor-controls">
+          <label class="field">
+            <span>Screenshot</span>
+            <select id="ed-shot" class="mini-select tall"></select>
+            <em>Raw simulator captures — take more with Capture</em>
+          </label>
+
+          <div class="field">
+            <span>Background</span>
+            <div class="segmented small">
+              <label><input type="radio" name="ed-bg-kind" value="solid" checked /><span>Solid</span></label>
+              <label><input type="radio" name="ed-bg-kind" value="gradient" /><span>Gradient</span></label>
+            </div>
+          </div>
+          <div id="ed-bg-solid" class="ed-color-row">
+            <input type="color" id="ed-bg-color" value="#101014" />
+            <span class="ed-color-label">Fill</span>
+          </div>
+          <div id="ed-bg-gradient" class="hidden">
+            <div id="ed-gradient-presets" class="ed-swatches"></div>
+            <div class="ed-color-row">
+              <input type="color" id="ed-grad-from" value="#1a1a2e" /><span class="ed-color-label">From</span>
+              <input type="color" id="ed-grad-to" value="#4a2a6a" /><span class="ed-color-label">To</span>
+            </div>
+            <label class="field ed-range"><span>Angle <b id="ed-angle-val">180°</b></span>
+              <input type="range" id="ed-angle" min="0" max="360" step="15" value="180" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Headline</span>
+            <input id="ed-headline" placeholder="Track your progress" autocomplete="off" />
+          </label>
+          <div class="ed-color-row">
+            <input type="color" id="ed-headline-color" value="#ffffff" />
+            <span class="ed-color-label">Text color</span>
+          </div>
+          <label class="field ed-range"><span>Text size <b id="ed-hsize-val">110</b></span>
+            <input type="range" id="ed-hsize" min="64" max="180" step="2" value="110" />
+          </label>
+          <label class="field ed-range"><span>Text position <b id="ed-hy-val">8%</b></span>
+            <input type="range" id="ed-hy" min="2" max="40" step="1" value="8" />
+          </label>
+
+          <label class="field ed-range"><span>Device size <b id="ed-dscale-val">80%</b></span>
+            <input type="range" id="ed-dscale" min="40" max="110" step="1" value="80" />
+          </label>
+          <button id="ed-dreset" class="ghost-btn small-btn" type="button">Reset device position</button>
+
+          <p id="ed-error" class="form-error hidden"></p>
+        </aside>
+      </div>
+    </div>
+  </div>
+
   <script src="/app.js"></script>
+  <script src="/editor.js"></script>
 </body>
 </html>

@@ -442,6 +442,14 @@ function shotCard({ kind, shot }) {
   actions.className = "shot-actions";
 
   if (kind === "raw") {
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", () => {
+      closeShots();
+      window.__rorkEditor?.open({ shotFile: shot.file });
+    });
+    actions.appendChild(editBtn);
+
     const frameBtn = document.createElement("button");
     frameBtn.textContent = "Frame";
     frameBtn.addEventListener("click", async () => {
@@ -501,15 +509,20 @@ async function refreshShots() {
 
     const rawGrid = $("raw-grid");
     const framedGrid = $("framed-grid");
+    const listingGrid = $("listing-grid");
+    const listing = data.listing || [];
     rawGrid.innerHTML = "";
     framedGrid.innerHTML = "";
+    listingGrid.innerHTML = "";
     for (const shot of data.raw) rawGrid.appendChild(shotCard({ kind: "raw", shot }));
     for (const shot of data.framed) framedGrid.appendChild(shotCard({ kind: "framed", shot }));
+    for (const shot of listing) listingGrid.appendChild(shotCard({ kind: "listing", shot }));
 
     $("raw-empty").classList.toggle("hidden", data.raw.length > 0);
     $("framed-empty").classList.toggle("hidden", data.framed.length > 0);
+    $("listing-empty").classList.toggle("hidden", listing.length > 0);
 
-    const count = data.raw.length + data.framed.length;
+    const count = data.raw.length + data.framed.length + listing.length;
     const badge = $("shots-count");
     badge.textContent = String(count);
     badge.classList.toggle("hidden", count === 0);
@@ -759,3 +772,11 @@ loadStatus();
 refreshShots();
 connectStream();
 setInterval(loadStatus, 15000);
+
+$("open-editor-btn").addEventListener("click", () => {
+  closeShots();
+  window.__rorkEditor?.open({});
+});
+
+// Bridge for editor.js (loaded after this script).
+window.__rork = { refreshShots };
