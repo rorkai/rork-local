@@ -2,9 +2,9 @@ import { execFile } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
+import { XcodeProject } from "rork-xcode";
 
 import { ASC_BIN, getProjectDir, loadConfig } from "./config.js";
-import { detectXcodeBuildSettings } from "./pbxproj.js";
 import { errorMessage, type ConfigValues, type MergedDetection } from "./types.js";
 
 const execFileP = promisify(execFile);
@@ -59,13 +59,18 @@ function detectFromExpo(dir: string): DetectHit {
   }
 }
 
-function detectFromXcode(dir: string): DetectHit {
+export function detectFromXcode(dir: string): DetectHit {
   for (const file of walkFiles(dir)) {
     if (!file.endsWith("project.pbxproj")) continue;
     try {
-      const pbx = readFileSync(file, "utf8");
-      const { bundleId, version } = detectXcodeBuildSettings(pbx);
-      if (bundleId) {
+      const project = XcodeProject.parse(readFileSync(file, "utf8"));
+      const app = project.findMainAppTarget("ios");
+      const bundleId = app?.resolveBuildSetting("PRODUCT_BUNDLE_IDENTIFIER") || "";
+      if (bundleId && !bundleId.includes("$(") && !bundleId.includes("${")) {
+        const resolvedVersion = app?.resolveBuildSetting("MARKETING_VERSION") || "";
+        const version = resolvedVersion.includes("$(") || resolvedVersion.includes("${")
+          ? ""
+          : resolvedVersion;
         return { bundleId, version, source: path.relative(dir, file) };
       }
     } catch {
