@@ -11,8 +11,8 @@ import {
   attachSseClient, cancelJob, isJobRunning, jobStatus, startAscJob, startPublish,
 } from "./jobs.js";
 import {
-  FRAMED_DIR, FRAME_DEVICES, LISTING_DIR, RAW_DIR, SHOTS_DIR, SLIDE_DEVICE_SIZES,
-  captureScreenshot, frameScreenshot, listShots, readDeck, sanitizeShotName, saveSlide, writeDeck,
+  FRAME_DEVICES, SLIDE_DEVICE_SIZES, captureScreenshot, frameScreenshot, framedDir,
+  listShots, listingDir, rawDir, readDeck, sanitizeShotName, saveSlide, shotsDir, writeDeck,
 } from "./screenshots.js";
 import { ensureBootedSimulator, listSimulators, startServeSimHelper } from "./sim.js";
 import { errorMessage, errorStderr, type AuthCheck, type PublishBody, type StatusResponse } from "./types.js";
@@ -186,15 +186,17 @@ app.post("/api/apps/create", (req, res) => {
 
 // -- screenshots --
 
-app.use("/shots/raw", express.static(RAW_DIR));
-app.use("/shots/framed", express.static(FRAMED_DIR));
-app.use("/shots/listing", express.static(LISTING_DIR));
+// The shots root follows the (runtime-mutable) project dir, so bind the
+// static handler per request instead of once at startup.
+app.use("/shots/raw", (req, res, next) => express.static(rawDir())(req, res, next));
+app.use("/shots/framed", (req, res, next) => express.static(framedDir())(req, res, next));
+app.use("/shots/listing", (req, res, next) => express.static(listingDir())(req, res, next));
 
 app.get("/api/screenshots", (_req, res) => {
   res.json({
-    raw: listShots(RAW_DIR),
-    framed: listShots(FRAMED_DIR),
-    listing: listShots(LISTING_DIR),
+    raw: listShots(rawDir()),
+    framed: listShots(framedDir()),
+    listing: listShots(listingDir()),
     frameDevices: FRAME_DEVICES,
     slideSizes: SLIDE_DEVICE_SIZES,
   });
@@ -230,7 +232,7 @@ app.post("/api/screenshots/frame", async (req, res) => {
 
 app.delete("/api/screenshots/:kind/:name", (req, res) => {
   const { kind, name } = req.params;
-  const dir = kind === "framed" ? FRAMED_DIR : kind === "listing" ? LISTING_DIR : RAW_DIR;
+  const dir = kind === "framed" ? framedDir() : kind === "listing" ? listingDir() : rawDir();
   const file = path.join(dir, `${sanitizeShotName(name)}.png`);
   if (existsSync(file)) unlinkSync(file);
   res.json({ ok: true });
@@ -302,7 +304,7 @@ app.post("/api/screenshots/upload", (req, res) => {
     res.status(400).json({ error: "App Store version is required" });
     return;
   }
-  const dir = source === "raw" ? RAW_DIR : source === "listing" ? LISTING_DIR : FRAMED_DIR;
+  const dir = source === "raw" ? rawDir() : source === "listing" ? listingDir() : framedDir();
   const shots = listShots(dir);
   if (shots.length === 0) {
     res.status(400).json({ error: `No ${source} screenshots to upload` });
@@ -310,7 +312,7 @@ app.post("/api/screenshots/upload", (req, res) => {
   }
 
   // App-scoped fan-out upload expects locale directories under --path.
-  const uploadRoot = path.join(SHOTS_DIR, "upload");
+  const uploadRoot = path.join(shotsDir(), "upload");
   rmSync(uploadRoot, { recursive: true, force: true });
   const localeDir = path.join(uploadRoot, locale);
   mkdirSync(localeDir, { recursive: true });
