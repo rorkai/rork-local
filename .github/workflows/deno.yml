@@ -25,18 +25,19 @@ jobs:
       - name: Setup repo
         uses: actions/checkout@v4
 
-      - name: Setup Deno
-        # uses: denoland/setup-deno@v1
-        uses: denoland/setup-deno@61fe2df320078202e33d7d5ad347e7dcfa0e8f31  # v1.1.2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          deno-version: v1.x
+          node-version: 20
 
-      # Uncomment this step to verify the use of 'deno fmt' on each commit.
-      # - name: Verify formatting
-      #   run: deno fmt --check
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: Run linter
-        run: deno lint
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
 
       - name: Run tests
-        run: deno test -A
+        run: bun test
