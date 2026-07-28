@@ -7,3 +7,4 @@ package-lock.json
 screenshots/
 *.tgz
 *.log
+public/app.js
