@@ -8,3 +8,4 @@ screenshots/
 *.tgz
 *.log
 public/app.js
+public/app.css
