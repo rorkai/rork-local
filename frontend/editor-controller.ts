@@ -2,9 +2,8 @@
 // + device-framed capture) on a <canvas> at exact App Store resolution.
 // Exports deterministic PNGs via toDataURL and saves them through
 // POST /api/screenshots/slide; deck state persists via /api/screenshots/deck.
-"use strict";
-(() => {
-  const $ = (id) => document.getElementById(id);
+export function setupEditorController() {
+  const $ = (id: string): any => document.getElementById(id)!;
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
 
@@ -341,7 +340,7 @@
     }
     shotSel.value = s.shot || "";
 
-    document.querySelector(`input[name="ed-bg-kind"][value="${s.bg.kind}"]`).checked = true;
+    (document.querySelector(`input[name="ed-bg-kind"][value="${s.bg.kind}"]`) as HTMLInputElement).checked = true;
     $("ed-bg-color").value = s.bg.color;
     $("ed-grad-from").value = s.bg.from;
     $("ed-grad-to").value = s.bg.to;
@@ -406,7 +405,7 @@
       swatches.appendChild(b);
     }
 
-    for (const radio of document.querySelectorAll('input[name="ed-bg-kind"]')) {
+    for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="ed-bg-kind"]')) {
       radio.addEventListener(
         "change",
         onEdit((s) => {
@@ -575,7 +574,7 @@
 
   // -- open / close ----------------------------------------------------------
 
-  async function open(opts = {}) {
+  async function open(opts: RorkEditorOptions = {}) {
     const editorEl = $("editor");
     show(editorEl);
     state.open = true;
@@ -630,4 +629,7 @@
 
   bindControls();
   window.__rorkEditor = { open };
-})();
+  return () => {
+    delete window.__rorkEditor;
+  };
+}

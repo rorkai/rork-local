@@ -187,8 +187,9 @@ bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```
 
-The browser UI (`public/app.js`) is a plain static asset served as-is — no
-bundler, no build step.
+The browser UI is maintained as React + TypeScript in `frontend/`. `bun run
+build:frontend` bundles it into static assets under `public/`; those generated
+assets are what the plain-Node server ships to `npx rork-local` users.
 
 ## License
 
