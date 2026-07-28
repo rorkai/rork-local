@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { setupAppController } from "./app-controller";
 import { setupEditorController } from "./editor-controller";
-import "./style.css";
 
 function App() {
   useEffect(() => {
@@ -15,7 +14,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <div className="flex h-dvh flex-col overflow-hidden bg-rork-bg font-sans text-rork-fg antialiased">
       <header className="topbar">
         <div className="brand">
           <img src="/rork-logo.svg" alt="Rork" className="brand-logo" />
@@ -638,7 +637,7 @@ function App() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

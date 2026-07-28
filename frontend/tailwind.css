@@ -1,0 +1,16 @@
+@import "tailwindcss" source("./");
+@import "./style.css" layer(components);
+
+@theme {
+  --color-rork-bg: hsl(0 0% 9%);
+  --color-rork-fg: #ffffff;
+  --color-rork-muted: hsl(0 0% 65%);
+  --color-rork-surface: rgb(23 23 23 / 80%);
+  --color-rork-hairline: rgb(255 255 255 / 8%);
+  --color-rork-border: rgb(255 255 255 / 10%);
+  --font-sans: -apple-system, "BlinkMacSystemFont", "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --radius-control: 12px;
+  --radius-popover: 16px;
+  --radius-sheet: 24px;
+}

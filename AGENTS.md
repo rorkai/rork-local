@@ -14,8 +14,9 @@ one-click TestFlight / App Store publishing and screenshot tooling (via the
   tool only, never a runtime requirement for `npx rork-local` users.
 - No interactive prompts in the server; everything the UI does must also be
   reachable through the plain HTTP API.
-- The browser UI is React + TypeScript under `frontend/`. Build it into
-  `public/`; the server only serves those generated static assets.
+- The browser UI is React TSX + Tailwind CSS under `frontend/`. Build it into
+  `public/`; the server only serves those generated static assets. Keep JSX
+  styling in Tailwind utilities and shared design tokens in `tailwind.css`.
 
 ## Build and dev
 

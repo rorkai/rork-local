@@ -5,5 +5,7 @@
   "semi": true,
   "singleQuote": false,
   "bracketSpacing": true,
-  "bracketSameLine": false
+  "bracketSameLine": false,
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./frontend/tailwind.css"
 }

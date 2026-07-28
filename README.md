@@ -189,9 +189,10 @@ bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```
 
-The browser UI is maintained as React + TypeScript in `frontend/`. `bun run
-build:frontend` bundles it into static assets under `public/`; those generated
-assets are what the plain-Node server ships to `npx rork-local` users.
+The browser UI is maintained as React TSX + Tailwind CSS in `frontend/`. `bun
+run build:frontend` bundles it into static assets under `public/`; those
+generated assets are what the plain-Node server ships to `npx rork-local`
+users.
 
 ## License
 
