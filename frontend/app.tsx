@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import type { AuthCheck, JobLine, JobStatus, ShotInfo, StatusResponse } from "../src/types";
@@ -32,6 +33,10 @@ const emptyForm: PublishForm = {
   wait: true,
   submit: false,
 };
+const queryKeys = {
+  status: ["status"] as const,
+  screenshots: ["screenshots"] as const,
+};
 
 async function json<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
@@ -57,33 +62,28 @@ function useEscape(close: () => void, enabled = true) {
   }, [close, enabled]);
 }
 
-function useServerState() {
-  const [status, setStatus] = useState<StatusResponse | null>(null);
+function usePublishEvents() {
+  const queryClient = useQueryClient();
   const [lines, setLines] = useState<JobLine[]>([]);
 
-  const refresh = useCallback(async () => {
-    setStatus(await json<StatusResponse>("/api/status"));
-  }, []);
-
   useEffect(() => {
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 15_000);
     const events = new EventSource("/api/publish/stream");
     events.addEventListener("status", (event) => {
       const job = JSON.parse((event as MessageEvent).data) as JobStatus;
-      setStatus((current) => (current ? { ...current, job } : current));
+      queryClient.setQueryData<StatusResponse>(queryKeys.status, (current) =>
+        current ? { ...current, job } : current,
+      );
     });
     events.addEventListener("line", (event) => {
       const line = JSON.parse((event as MessageEvent).data) as JobLine;
       setLines((current) => [...current.slice(-299), line]);
     });
     return () => {
-      window.clearInterval(timer);
       events.close();
     };
-  }, [refresh]);
+  }, [queryClient]);
 
-  return { status, lines, refresh, clearLines: () => setLines([]) };
+  return lines;
 }
 
 const control =
@@ -614,15 +614,30 @@ function ScreenshotEditor({ shot, close, saved }: { shot?: ShotInfo; close: () =
 }
 
 function App() {
-  const { status, lines, refresh: refreshStatus } = useServerState();
-  const [shots, setShots] = useState<Shots>(emptyShots);
+  const queryClient = useQueryClient();
+  const statusQuery = useQuery({
+    queryKey: queryKeys.status,
+    queryFn: () => json<StatusResponse>("/api/status"),
+    refetchInterval: 15_000,
+  });
+  const screenshotsQuery = useQuery({
+    queryKey: queryKeys.screenshots,
+    queryFn: () => json<Shots>("/api/screenshots"),
+  });
+  const lines = usePublishEvents();
+  const status = statusQuery.data ?? null;
+  const shots = screenshotsQuery.data ?? emptyShots;
   const [publishOpen, setPublishOpen] = useState(false);
   const [shotsOpen, setShotsOpen] = useState(false);
   const [editor, setEditor] = useState<{ open: boolean; shot?: ShotInfo }>({ open: false });
   const [error, setError] = useState("");
 
-  const refreshShots = useCallback(async () => setShots(await json<Shots>("/api/screenshots")), []);
-  useEffect(() => void refreshShots(), [refreshShots]);
+  const refreshStatus = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.status });
+  }, [queryClient]);
+  const refreshShots = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.screenshots });
+  }, [queryClient]);
 
   async function capture() {
     setError("");
@@ -709,4 +724,16 @@ function App() {
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root");
-createRoot(root).render(<App />);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 2_000,
+    },
+  },
+});
+createRoot(root).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>,
+);
