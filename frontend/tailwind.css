@@ -1,5 +1,4 @@
 @import "tailwindcss" source("./");
-@import "./style.css" layer(components);
 
 @theme {
   --color-rork-bg: hsl(0 0% 9%);
