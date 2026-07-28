@@ -1,6 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import type { AuthCheck, JobLine, JobStatus, ShotInfo, StatusResponse } from "../../src/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AuthCheck, JobLine, ShotInfo, StatusResponse } from "../../src/types";
+import { useEscape } from "../hooks/use-escape";
+import { usePublishEvents } from "../hooks/use-publish-events";
+import { queryKeys } from "../query-keys";
+import { control, iconButton, input, label, Modal, muted, primary, surface } from "./ui";
 
 type Shots = {
   raw: ShotInfo[];
@@ -32,11 +36,6 @@ const emptyForm: PublishForm = {
   wait: true,
   submit: false,
 };
-const queryKeys = {
-  status: ["status"] as const,
-  screenshots: ["screenshots"] as const,
-};
-
 async function json<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   const data = await response.json().catch(() => ({}));
@@ -50,64 +49,6 @@ function post<T>(url: string, body: unknown = {}): Promise<T> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-}
-
-function useEscape(close: () => void, enabled = true) {
-  useEffect(() => {
-    if (!enabled) return;
-    const listener = (event: KeyboardEvent) => event.key === "Escape" && close();
-    document.addEventListener("keydown", listener);
-    return () => document.removeEventListener("keydown", listener);
-  }, [close, enabled]);
-}
-
-function usePublishEvents() {
-  const queryClient = useQueryClient();
-  const [lines, setLines] = useState<JobLine[]>([]);
-
-  useEffect(() => {
-    const events = new EventSource("/api/publish/stream");
-    events.addEventListener("status", (event) => {
-      const job = JSON.parse((event as MessageEvent).data) as JobStatus;
-      queryClient.setQueryData<StatusResponse>(queryKeys.status, (current) =>
-        current ? { ...current, job } : current,
-      );
-    });
-    events.addEventListener("line", (event) => {
-      const line = JSON.parse((event as MessageEvent).data) as JobLine;
-      setLines((current) => [...current.slice(-299), line]);
-    });
-    return () => {
-      events.close();
-    };
-  }, [queryClient]);
-
-  return lines;
-}
-
-const control =
-  "inline-flex h-8 items-center justify-center rounded-control border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white transition hover:bg-white/[0.09] disabled:pointer-events-none disabled:opacity-40";
-const primary = `${control} bg-white text-black hover:bg-white/90`;
-const iconButton = `${control} w-8 px-0 text-rork-muted`;
-const input =
-  "h-9 w-full rounded-control border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-white/30";
-const label = "flex flex-col gap-2 text-sm font-medium";
-const muted = "text-xs font-normal text-rork-muted";
-const surface =
-  "border border-white/10 bg-rork-surface bg-[linear-gradient(rgb(255_255_255/0.02),rgb(255_255_255/0.02))] shadow-2xl backdrop-blur-2xl";
-
-function Modal({ children, close, className = "" }: { children: ReactNode; close: () => void; className?: string }) {
-  useEscape(close);
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onMouseDown={close}>
-      <section
-        className={`${surface} ${className} max-h-[calc(100dvh-2rem)] overflow-hidden rounded-sheet`}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        {children}
-      </section>
-    </div>
-  );
 }
 
 function Header({

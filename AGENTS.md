@@ -17,8 +17,9 @@ one-click TestFlight / App Store publishing and screenshot tooling (via the
 - The browser UI is React TSX + Tailwind CSS under `frontend/`. Build it into
   `public/`; the server only serves those generated static assets. Keep JSX
   styling in Tailwind utilities and shared design tokens in `tailwind.css`.
-  Keep the entry point thin, put UI under `frontend/components/`, and use
-  TanStack React Query for HTTP server state and cache invalidation.
+  Keep the entry point thin, put reusable UI under `frontend/components/`,
+  reusable behavior under `frontend/hooks/`, and use TanStack React Query for
+  HTTP server state and cache invalidation.
 
 ## Build and dev
 
