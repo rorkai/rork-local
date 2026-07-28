@@ -23,6 +23,8 @@ one-click TestFlight / App Store publishing and screenshot tooling (via the
 bun install
 bun run dev        # run src/cli.ts directly under Bun (port 3131)
 bun run build      # bun build → dist/ (node target) + tsc declarations
+bun run format     # format React/TypeScript frontend source with Prettier
+bun run format:check
 bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```

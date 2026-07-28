@@ -25,6 +25,8 @@
     "build": "bun run build:frontend && bun run build:server",
     "build:frontend": "bun build frontend/app.tsx --target browser --outdir public --minify --define process.env.NODE_ENV='\"production\"' && cp frontend/index.html public/index.html",
     "build:server": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external --tsconfig-override tsconfig.build.json && tsc --emitDeclarationOnly",
+    "format": "prettier --write \"frontend/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"frontend/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit && tsc -p frontend/tsconfig.json",
     "dev": "bun run src/cli.ts",
     "start": "node dist/cli.js",
@@ -45,6 +47,7 @@
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "prettier": "^3.9.6",
     "typescript": "^5.9.3"
   }
 }

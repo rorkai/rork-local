@@ -9,10 +9,10 @@ export function setupEditorController() {
 
   // Portrait presets matching `asc screenshots sizes` device types.
   const PRESETS = [
-    { id: "IPHONE_69", label: 'iPhone 6.9″ — 1290×2796', w: 1290, h: 2796 },
-    { id: "IPHONE_65", label: 'iPhone 6.5″ — 1284×2778', w: 1284, h: 2778 },
-    { id: "IPHONE_61", label: 'iPhone 6.1″ — 1179×2556', w: 1179, h: 2556 },
-    { id: "IPAD_PRO_3GEN_129", label: 'iPad 12.9″ — 2048×2732', w: 2048, h: 2732 },
+    { id: "IPHONE_69", label: "iPhone 6.9″ — 1290×2796", w: 1290, h: 2796 },
+    { id: "IPHONE_65", label: "iPhone 6.5″ — 1284×2778", w: 1284, h: 2778 },
+    { id: "IPHONE_61", label: "iPhone 6.1″ — 1179×2556", w: 1179, h: 2556 },
+    { id: "IPAD_PRO_3GEN_129", label: "iPad 12.9″ — 2048×2732", w: 2048, h: 2732 },
   ];
 
   const GRADIENTS = [
@@ -70,11 +70,14 @@ export function setupEditorController() {
     const bg = slide.bg;
     if (bg.kind === "gradient") {
       const rad = ((bg.angle - 90) * Math.PI) / 180;
-      const cx = W / 2, cy = H / 2;
+      const cx = W / 2,
+        cy = H / 2;
       const len = (Math.abs(W * Math.cos(rad)) + Math.abs(H * Math.sin(rad))) / 2;
       const grad = ctx.createLinearGradient(
-        cx - Math.cos(rad) * len, cy - Math.sin(rad) * len,
-        cx + Math.cos(rad) * len, cy + Math.sin(rad) * len,
+        cx - Math.cos(rad) * len,
+        cy - Math.sin(rad) * len,
+        cx + Math.cos(rad) * len,
+        cy + Math.sin(rad) * len,
       );
       grad.addColorStop(0, bg.from);
       grad.addColorStop(1, bg.to);
@@ -145,7 +148,9 @@ export function setupEditorController() {
   }
 
   function wrapText(ctx, text, maxWidth) {
-    const words = String(text || "").split(/\s+/).filter(Boolean);
+    const words = String(text || "")
+      .split(/\s+/)
+      .filter(Boolean);
     const lines = [];
     let line = "";
     for (const word of words) {
@@ -340,7 +345,9 @@ export function setupEditorController() {
     }
     shotSel.value = s.shot || "";
 
-    (document.querySelector(`input[name="ed-bg-kind"][value="${s.bg.kind}"]`) as HTMLInputElement).checked = true;
+    (
+      document.querySelector(`input[name="ed-bg-kind"][value="${s.bg.kind}"]`) as HTMLInputElement
+    ).checked = true;
     $("ed-bg-color").value = s.bg.color;
     $("ed-grad-from").value = s.bg.from;
     $("ed-grad-to").value = s.bg.to;
@@ -414,9 +421,24 @@ export function setupEditorController() {
         }),
       );
     }
-    $("ed-bg-color").addEventListener("input", onEdit((s, e) => { s.bg.color = e.target.value; }));
-    $("ed-grad-from").addEventListener("input", onEdit((s, e) => { s.bg.from = e.target.value; }));
-    $("ed-grad-to").addEventListener("input", onEdit((s, e) => { s.bg.to = e.target.value; }));
+    $("ed-bg-color").addEventListener(
+      "input",
+      onEdit((s, e) => {
+        s.bg.color = e.target.value;
+      }),
+    );
+    $("ed-grad-from").addEventListener(
+      "input",
+      onEdit((s, e) => {
+        s.bg.from = e.target.value;
+      }),
+    );
+    $("ed-grad-to").addEventListener(
+      "input",
+      onEdit((s, e) => {
+        s.bg.to = e.target.value;
+      }),
+    );
     $("ed-angle").addEventListener(
       "input",
       onEdit((s, e) => {
@@ -425,10 +447,25 @@ export function setupEditorController() {
       }),
     );
 
-    $("ed-shot").addEventListener("change", onEdit((s, e) => { s.shot = e.target.value || null; }));
+    $("ed-shot").addEventListener(
+      "change",
+      onEdit((s, e) => {
+        s.shot = e.target.value || null;
+      }),
+    );
 
-    $("ed-headline").addEventListener("input", onEdit((s, e) => { s.headline.text = e.target.value; }));
-    $("ed-headline-color").addEventListener("input", onEdit((s, e) => { s.headline.color = e.target.value; }));
+    $("ed-headline").addEventListener(
+      "input",
+      onEdit((s, e) => {
+        s.headline.text = e.target.value;
+      }),
+    );
+    $("ed-headline-color").addEventListener(
+      "input",
+      onEdit((s, e) => {
+        s.headline.color = e.target.value;
+      }),
+    );
     $("ed-hsize").addEventListener(
       "input",
       onEdit((s, e) => {
@@ -580,8 +617,12 @@ export function setupEditorController() {
     state.open = true;
 
     const [shotsRes, deckRes] = await Promise.all([
-      fetch("/api/screenshots").then((r) => r.json()).catch(() => null),
-      fetch("/api/screenshots/deck").then((r) => r.json()).catch(() => null),
+      fetch("/api/screenshots")
+        .then((r) => r.json())
+        .catch(() => null),
+      fetch("/api/screenshots/deck")
+        .then((r) => r.json())
+        .catch(() => null),
     ]);
     state.rawShots = shotsRes?.raw || [];
 
@@ -601,7 +642,9 @@ export function setupEditorController() {
         state.selected = idx;
       } else {
         const onlyPlaceholder =
-          state.slides.length === 1 && !state.slides[0].shot && state.slides[0].headline.text === "Your headline";
+          state.slides.length === 1 &&
+          !state.slides[0].shot &&
+          state.slides[0].headline.text === "Your headline";
         if (onlyPlaceholder) {
           state.slides[0].shot = opts.shotFile;
         } else {

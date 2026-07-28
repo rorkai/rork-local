@@ -183,6 +183,8 @@ src/
 bun install
 bun run build      # bun build → dist/ (node target) + tsc declarations
 bun run dev        # run src/cli.ts directly under Bun
+bun run format     # format frontend TypeScript/TSX with Prettier
+bun run format:check
 bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```
