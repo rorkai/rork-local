@@ -80,12 +80,7 @@ function App() {
       </header>
 
       <main className="stage">
-        <iframe
-          id="sim-frame"
-          src="/.sim"
-          title="iOS Simulator"
-          allow="clipboard-read; clipboard-write"
-        ></iframe>
+        <iframe id="sim-frame" src="/.sim" title="iOS Simulator" allow="clipboard-read; clipboard-write"></iframe>
         <div id="countdown" className="countdown hidden">
           <span id="countdown-num">3</span>
         </div>
@@ -119,22 +114,14 @@ function App() {
           <div className="pub-section">
             <div>
               <h4 className="section-title">App Store</h4>
-              <p className="section-sub">
-                Submit this app's signed build to TestFlight and the App Store
-              </p>
+              <p className="section-sub">Submit this app's signed build to TestFlight and the App Store</p>
             </div>
             <div id="pub-status-row" className="status-row hidden">
               <span id="pub-status-dot" className="dot dot-idle"></span>
               <span id="pub-status-label"></span>
             </div>
             <button id="open-wizard-btn" className="cta-btn btn-full">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
               </svg>
               Submit to App Store
@@ -144,9 +131,7 @@ function App() {
           <div className="pub-section">
             <div>
               <h4 className="section-title">Screenshots</h4>
-              <p className="section-sub">
-                Capture, frame, and upload App Store listing screenshots
-              </p>
+              <p className="section-sub">Capture, frame, and upload App Store listing screenshots</p>
             </div>
             <button id="open-shots-btn" className="cta-btn cta-secondary btn-full">
               Open Screenshots
@@ -220,21 +205,15 @@ function App() {
             <div id="w-nodetect" className="banner warn hidden">
               <div className="banner-title">No app project found</div>
               <p>
-                Nothing was detected in this folder. Point the Project field at your app's directory
-                (the one with <code>app.json</code> or an Xcode project), or fill in the fields
-                below manually.
+                Nothing was detected in this folder. Point the Project field at your app's directory (the one with{" "}
+                <code>app.json</code> or an Xcode project), or fill in the fields below manually.
               </p>
             </div>
             <div className="step-grid">
               <div className="col">
                 <label className="field">
                   <span>App ID</span>
-                  <input
-                    id="w-app"
-                    placeholder="eg. 6759231657"
-                    autoComplete="off"
-                    spellCheck="false"
-                  />
+                  <input id="w-app" placeholder="eg. 6759231657" autoComplete="off" spellCheck="false" />
                   <em>Your App Store Connect app ID</em>
                 </label>
                 <div id="w-create-wrap">
@@ -244,12 +223,7 @@ function App() {
                   <div id="w-create-block" className="create-block hidden">
                     <label className="field">
                       <span>App Name</span>
-                      <input
-                        id="c-name"
-                        placeholder="eg. My App"
-                        autoComplete="off"
-                        spellCheck="false"
-                      />
+                      <input id="c-name" placeholder="eg. My App" autoComplete="off" spellCheck="false" />
                     </label>
                     <label className="field">
                       <span>Bundle ID</span>
@@ -263,12 +237,7 @@ function App() {
                     </label>
                     <label className="field">
                       <span>SKU</span>
-                      <input
-                        id="c-sku"
-                        placeholder="eg. MYAPP123"
-                        autoComplete="off"
-                        spellCheck="false"
-                      />
+                      <input id="c-sku" placeholder="eg. MYAPP123" autoComplete="off" spellCheck="false" />
                     </label>
                     <div className="create-actions">
                       <button id="c-create" type="button" className="cta-btn small-btn">
@@ -284,12 +253,7 @@ function App() {
                 </div>
                 <label className="field">
                   <span>App Version</span>
-                  <input
-                    id="w-version"
-                    placeholder="eg. 1.0.0"
-                    autoComplete="off"
-                    spellCheck="false"
-                  />
+                  <input id="w-version" placeholder="eg. 1.0.0" autoComplete="off" spellCheck="false" />
                   <em>Semantic version (major.minor.patch)</em>
                 </label>
                 <label className="field">
@@ -309,12 +273,7 @@ function App() {
                   <span>Destination</span>
                   <div className="segmented">
                     <label>
-                      <input
-                        type="radio"
-                        name="w-target"
-                        defaultValue="testflight"
-                        defaultChecked
-                      />
+                      <input type="radio" name="w-target" defaultValue="testflight" defaultChecked />
                       <span>TestFlight</span>
                     </label>
                     <label>
@@ -365,17 +324,16 @@ function App() {
                   <span id="auth-web-label">Web session (app creation)</span>
                 </div>
                 <p className="auth-note">
-                  Credentials come from <code>asc auth login</code> (API key) and{" "}
-                  <code>asc web auth login</code> (web session) and are stored locally. Nothing is
-                  sent anywhere except Apple.
+                  Credentials come from <code>asc auth login</code> (API key) and <code>asc web auth login</code> (web
+                  session) and are stored locally. Nothing is sent anywhere except Apple.
                 </p>
               </div>
               <div id="auth-bad" className="hidden">
                 <div className="banner">
                   <div className="banner-title">App Store Connect API key required</div>
                   <p>
-                    Publishing talks to the App Store Connect API. Create a key at App Store Connect
-                    → Users and Access → Integrations, then run:
+                    Publishing talks to the App Store Connect API. Create a key at App Store Connect → Users and Access
+                    → Integrations, then run:
                   </p>
                   <pre>asc auth login</pre>
                   <p id="auth-detail" className="auth-detail"></p>
@@ -640,14 +598,7 @@ function App() {
                   <span>
                     Angle <b id="ed-angle-val">180°</b>
                   </span>
-                  <input
-                    type="range"
-                    id="ed-angle"
-                    min="0"
-                    max="360"
-                    step="15"
-                    defaultValue="180"
-                  />
+                  <input type="range" id="ed-angle" min="0" max="360" step="15" defaultValue="180" />
                 </label>
               </div>
 

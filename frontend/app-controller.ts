@@ -18,10 +18,7 @@ export function setupAppController() {
 
   // friendly progress titles + rough percents keyed by substrings of asc output
   const PROGRESS_MAP: Array<[RegExp, [string, string, number]]> = [
-    [
-      /uploading|upload started/i,
-      ["Uploading to TestFlight", "Uploading your build to Apple…", 40],
-    ],
+    [/uploading|upload started/i, ["Uploading to TestFlight", "Uploading your build to Apple…", 40]],
     [/waiting|processing/i, ["Processing", "Apple is processing your build…", 65]],
     [/distribut|adding.*group|beta group/i, ["Distributing", "Adding build to beta groups…", 80]],
     [/submit/i, ["Submitting", "Submitting for review…", 90]],
@@ -155,9 +152,7 @@ export function setupAppController() {
     } else {
       wNext.textContent = "Close";
       wNext.disabled = false;
-      $("w-note").textContent = jobRunning
-        ? "You can close now — publish will continue in background"
-        : "";
+      $("w-note").textContent = jobRunning ? "You can close now — publish will continue in background" : "";
     }
   }
 
@@ -241,9 +236,7 @@ export function setupAppController() {
       if (detectedGroups.length > 0 && values.appId) groupsFetchedFor = values.appId;
     }
 
-    $("w-hint").textContent = detected.found
-      ? `Auto-filled from ${detected.projectDir}`
-      : "No app project found here";
+    $("w-hint").textContent = detected.found ? `Auto-filled from ${detected.projectDir}` : "No app project found here";
     $("w-nodetect").classList.toggle("hidden", detected.found);
     updateCreateLink();
   }

@@ -345,9 +345,7 @@ export function setupEditorController() {
     }
     shotSel.value = s.shot || "";
 
-    (
-      document.querySelector(`input[name="ed-bg-kind"][value="${s.bg.kind}"]`) as HTMLInputElement
-    ).checked = true;
+    (document.querySelector(`input[name="ed-bg-kind"][value="${s.bg.kind}"]`) as HTMLInputElement).checked = true;
     $("ed-bg-color").value = s.bg.color;
     $("ed-grad-from").value = s.bg.from;
     $("ed-grad-to").value = s.bg.to;
@@ -642,9 +640,7 @@ export function setupEditorController() {
         state.selected = idx;
       } else {
         const onlyPlaceholder =
-          state.slides.length === 1 &&
-          !state.slides[0].shot &&
-          state.slides[0].headline.text === "Your headline";
+          state.slides.length === 1 && !state.slides[0].shot && state.slides[0].headline.text === "Your headline";
         if (onlyPlaceholder) {
           state.slides[0].shot = opts.shotFile;
         } else {
