@@ -38,6 +38,12 @@ bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```
 
+- Optional Nix dev shell: `nix develop` (or `direnv allow` for the `.envrc`)
+  provides bun, Node 24, and the repo tooling. `flake.nix` only holds inputs and
+  systems; the shell lives in `nix/dev-shell.nix` and the `git wt` config in
+  `nix/git-wt.nix`. macOS/Apple silicon only, since the preview drives
+  `xcrun simctl`. `asc` is not in nixpkgs — install it separately or set
+  `ASC_BIN`.
 - Server code lives in `src/` (`server.ts` HTTP wiring, `detect.ts` project
   auto-detection, `jobs.ts` asc job runner + SSE, `screenshots.ts`, `sim.ts`
   simulator bootstrap, `config.ts`, `types.ts` shared API payload types).
