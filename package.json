@@ -22,8 +22,12 @@
     "asc"
   ],
   "scripts": {
-    "build": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external --tsconfig-override tsconfig.build.json && tsc --emitDeclarationOnly",
-    "typecheck": "tsc --noEmit",
+    "build": "bun run build:frontend && bun run build:server",
+    "build:frontend": "bun build frontend/app.tsx --target browser --outdir public --minify --define process.env.NODE_ENV='\"production\"' && tailwindcss -i frontend/tailwind.css -o public/app.css --minify && cp frontend/index.html public/index.html",
+    "build:server": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external --tsconfig-override tsconfig.build.json && tsc --emitDeclarationOnly",
+    "format": "prettier --write \"frontend/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"frontend/**/*.{ts,tsx,css}\"",
+    "typecheck": "tsc --noEmit && tsc -p frontend/tsconfig.json",
     "dev": "bun run src/cli.ts",
     "start": "node dist/cli.js",
     "prepublishOnly": "npm run build"
@@ -32,13 +36,22 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "express": "^5.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "rork-xcode": "^0.12.0",
     "serve-sim": "^0.1.44"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3"
   }
 }

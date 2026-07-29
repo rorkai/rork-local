@@ -14,8 +14,12 @@ one-click TestFlight / App Store publishing and screenshot tooling (via the
   tool only, never a runtime requirement for `npx rork-local` users.
 - No interactive prompts in the server; everything the UI does must also be
   reachable through the plain HTTP API.
-- The browser UI (`public/`) is served as static assets with no bundler or
-  build step. Keep it vanilla HTML/CSS/JS.
+- The browser UI is React TSX + Tailwind CSS under `frontend/`. Build it into
+  `public/`; the server only serves those generated static assets. Keep JSX
+  styling in Tailwind utilities and shared design tokens in `tailwind.css`.
+  Keep the entry point thin, put reusable UI under `frontend/components/`,
+  reusable behavior under `frontend/hooks/`, and use TanStack React Query for
+  HTTP server state and cache invalidation.
 
 ## Build and dev
 
@@ -23,6 +27,8 @@ one-click TestFlight / App Store publishing and screenshot tooling (via the
 bun install
 bun run dev        # run src/cli.ts directly under Bun (port 3131)
 bun run build      # bun build → dist/ (node target) + tsc declarations
+bun run format     # format React/TypeScript frontend source with Prettier
+bun run format:check
 bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```
@@ -32,7 +38,8 @@ bun start          # node dist/cli.js (runs the built output)
   simulator bootstrap, `config.ts`, `types.ts` shared API payload types).
 - The published bin points straight at `dist/cli.js` (shebang preserved by
   `bun build`); rebuild before testing server changes through the bin.
-- Static asset changes under `public/` need no server restart.
+- Frontend source changes under `frontend/` require `bun run build:frontend`;
+  the generated static assets need no server restart.
 - The dev server typically runs under pm2 (`npx pm2 restart rork-local
 --update-env` from the project dir). serve-sim's native helper occasionally
   segfaults right after startup; pm2 absorbs it — retry once if a bare start

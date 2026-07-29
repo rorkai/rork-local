@@ -1,5 +1,5 @@
-/** Shared API payload types. These shapes are what the frontend (public/app.js)
- * consumes — keep them byte-compatible with the original server.mjs responses. */
+/** Shared API payload types. These shapes are consumed by the React frontend;
+ * keep them byte-compatible with the server responses. */
 
 /** User-facing publish values, merged from rork.config.json and env. */
 export type ConfigValues = {
