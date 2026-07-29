@@ -27,6 +27,35 @@ const app = express();
 // Editor slides arrive as base64 PNGs at App Store resolution (a few MB each).
 app.use(express.json({ limit: "40mb" }));
 
+const serveSimBrandOverride =
+  '<style id="rork-local-serve-sim-overrides">a[aria-label="Open serve-sim"]{display:none!important}</style>';
+
+app.use((req, res, next) => {
+  if (req.path !== "/.sim" && req.path !== "/.sim/") {
+    next();
+    return;
+  }
+
+  const end = res.end.bind(res);
+  res.end = ((
+    chunk?: unknown,
+    encoding?: BufferEncoding | (() => void),
+    callback?: () => void,
+  ) => {
+    let output = chunk;
+    if (typeof chunk === "string" || Buffer.isBuffer(chunk)) {
+      const html = chunk.toString().replace("</head>", `${serveSimBrandOverride}</head>`);
+      output = Buffer.isBuffer(chunk) ? Buffer.from(html) : html;
+    }
+
+    if (output === undefined) return end();
+    if (typeof encoding === "function") return end(output, encoding);
+    if (encoding === undefined) return callback ? end(output, callback) : end(output);
+    return end(output, encoding, callback);
+  }) as typeof res.end;
+  next();
+});
+
 const sim = simMiddleware({ basePath: "/.sim", proxyHelpers: true });
 app.use(sim);
 
