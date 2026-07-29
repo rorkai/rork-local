@@ -38,6 +38,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
     "express": "^5.1.0",
+    "lucide-react": "^1.27.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "rork-xcode": "^0.12.0",
