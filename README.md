@@ -170,7 +170,8 @@ running the CLI via `npx` don't need Bun:
 ```
 src/
   cli.ts          entry point (the published bin points at dist/cli.js)
-  server.ts       Express wiring + HTTP API + boot
+  server.ts       route wiring + HTTP API + boot
+  http.ts         router, static files, JSON bodies (on node:http, no framework)
   config.ts       paths, rork.config.json, asc binary resolution, project dir
   detect.ts       Xcode-style project detection + caching
   jobs.ts         single-job asc runner + SSE fan-out

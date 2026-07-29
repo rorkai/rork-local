@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
-import type { Response } from "express";
+import type { ServerResponse } from "node:http";
 
 import { ASC_BIN } from "./config.js";
 import type { JobKind, JobLine, JobResult, JobState, JobStatus, LogStream, PublishBody } from "./types.js";
@@ -35,7 +35,7 @@ const job: Job = {
   stdoutText: "",
 };
 
-const sseClients = new Set<Response>();
+const sseClients = new Set<ServerResponse>();
 
 function pushLine(stream: LogStream, text: string): void {
   const line: JobLine = { t: Date.now(), stream, text };
@@ -75,7 +75,7 @@ export function cancelJob(): boolean {
 }
 
 /** Attach an SSE client: replays current status + buffered lines, then streams. */
-export function attachSseClient(res: Response, onClose: (cb: () => void) => void): void {
+export function attachSseClient(res: ServerResponse, onClose: (cb: () => void) => void): void {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",

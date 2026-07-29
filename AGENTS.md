@@ -38,9 +38,14 @@ bun run typecheck  # tsc --noEmit
 bun start          # node dist/cli.js (runs the built output)
 ```
 
-- Server code lives in `src/` (`server.ts` HTTP wiring, `detect.ts` project
-  auto-detection, `jobs.ts` asc job runner + SSE, `screenshots.ts`, `sim.ts`
-  simulator bootstrap, `config.ts`, `types.ts` shared API payload types).
+- Server code lives in `src/` (`server.ts` HTTP wiring, `http.ts` the routing /
+  static / JSON-body layer, `detect.ts` project auto-detection, `jobs.ts` asc
+  job runner + SSE, `screenshots.ts`, `sim.ts` simulator bootstrap,
+  `config.ts`, `types.ts` shared API payload types).
+- The server has no HTTP framework dependency — `http.ts` implements the slice
+  of express the routes need on `node:http`. Keep it that way: new endpoints go
+  through `createRouter`, and runtime `dependencies` should stay near-empty so
+  `npx rork-local` installs fast for coding agents.
 - The published bin points straight at `dist/cli.js` (shebang preserved by
   `bun build`); rebuild before testing server changes through the bin.
 - `build:server` passes `--external "*/server.js"` so `dist/cli.js` stays a

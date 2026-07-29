@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, rmSync, unlinkSync } from "node:fs";
+import { createServer } from "node:http";
 import path from "node:path";
 import { promisify } from "node:util";
-import express from "express";
 import { simMiddleware } from "serve-sim/middleware";
 
 import { ASC_BIN, PKG_DIR, PORT, getProjectDir, loadConfig, setProjectDir } from "./config.js";
@@ -10,6 +10,7 @@ import { fetchBetaGroups, mergedDetection, refreshDetection, warmDetection } fro
 import {
   attachSseClient, cancelJob, isJobRunning, jobStatus, startAscJob, startPublish,
 } from "./jobs.js";
+import { createRouter, requestPath, sendError, sendJson, serveStatic } from "./http.js";
 import {
   FRAME_DEVICES, SLIDE_DEVICE_SIZES, captureScreenshot, frameScreenshot, framedDir,
   listShots, listingDir, rawDir, readDeck, sanitizeShotName, saveSlide, shotsDir, writeDeck,
@@ -23,15 +24,15 @@ const execFileP = promisify(execFile);
 // HTTP server
 // ---------------------------------------------------------------------------
 
-const app = express();
 // Editor slides arrive as base64 PNGs at App Store resolution (a few MB each).
-app.use(express.json({ limit: "40mb" }));
+const router = createRouter({ bodyLimitBytes: 40 * 1024 * 1024 });
 
 const serveSimBrandOverride =
   '<style id="rork-local-serve-sim-overrides">a[aria-label="Open serve-sim"]{display:none!important}</style>';
 
-app.use((req, res, next) => {
-  if (req.path !== "/.sim" && req.path !== "/.sim/") {
+router.use((req, res, next) => {
+  const pathname = requestPath(req);
+  if (pathname !== "/.sim" && pathname !== "/.sim/") {
     next();
     return;
   }
@@ -57,11 +58,33 @@ app.use((req, res, next) => {
 });
 
 const sim = simMiddleware({ basePath: "/.sim", proxyHelpers: true });
-app.use(sim);
+router.use(sim);
 
-app.use(express.static(path.join(PKG_DIR, "public")));
+// The shots root follows the (runtime-mutable) project dir, so resolve the
+// directory per request instead of binding it once at startup.
+const SHOT_DIRS: Array<[string, () => string]> = [
+  ["/shots/raw", rawDir],
+  ["/shots/framed", framedDir],
+  ["/shots/listing", listingDir],
+];
 
-app.get("/api/status", async (_req, res) => {
+router.use((req, res, next) => {
+  const pathname = requestPath(req);
+  for (const [prefix, dir] of SHOT_DIRS) {
+    if (pathname !== prefix && !pathname.startsWith(`${prefix}/`)) continue;
+    if (serveStatic(dir(), pathname.slice(prefix.length), req, res)) return;
+    sendError(res, 404, "Screenshot not found");
+    return;
+  }
+  next();
+});
+
+router.use((req, res, next) => {
+  if (serveStatic(path.join(PKG_DIR, "public"), requestPath(req), req, res)) return;
+  next();
+});
+
+router.get("/api/status", async (_req, res) => {
   let device = null;
   try {
     const devices = await listSimulators();
@@ -86,51 +109,53 @@ app.get("/api/status", async (_req, res) => {
     detected: mergedDetection(),
     job: jobStatus(),
   };
-  res.json(body);
+  sendJson(res, 200, body);
 });
 
-app.post("/api/config/detect", async (_req, res) => {
+router.post("/api/config/detect", async (_req, res) => {
   try {
     const { detected, bundleId, notes } = await refreshDetection({ force: true });
-    res.json({ detected, bundleId, notes, projectDir: getProjectDir(), merged: mergedDetection() });
+    sendJson(res, 200, {
+      detected, bundleId, notes, projectDir: getProjectDir(), merged: mergedDetection(),
+    });
   } catch (err) {
-    res.status(500).json({ error: errorMessage(err) });
+    sendError(res, 500, errorMessage(err));
   }
 });
 
-app.post("/api/config/project", async (req, res) => {
-  const dir = String((req.body as { dir?: string } | undefined)?.dir || "").trim();
+router.post("/api/config/project", async (_req, res, { body }) => {
+  const dir = String((body as { dir?: string } | undefined)?.dir || "").trim();
   if (!dir) {
-    res.status(400).json({ error: "Project directory is required" });
+    sendError(res, 400, "Project directory is required");
     return;
   }
   try {
     setProjectDir(dir);
   } catch (err) {
-    res.status(400).json({ error: errorMessage(err) });
+    sendError(res, 400, errorMessage(err));
     return;
   }
   await refreshDetection({ force: true }).catch(() => {});
-  res.json({ ok: true, projectDir: getProjectDir(), detected: mergedDetection() });
+  sendJson(res, 200, { ok: true, projectDir: getProjectDir(), detected: mergedDetection() });
 });
 
 // Beta groups for an explicit app ID — the wizard calls this when the user
 // types an App ID that detection didn't resolve, so TestFlight validation can
 // still offer the app's real groups.
-app.get("/api/groups", async (req, res) => {
-  const appId = String(req.query.app || "").trim();
+router.get("/api/groups", async (_req, res, { query }) => {
+  const appId = String(query.get("app") || "").trim();
   if (!appId) {
-    res.status(400).json({ error: "app query parameter is required" });
+    sendError(res, 400, "app query parameter is required");
     return;
   }
   if (!ASC_BIN) {
-    res.status(500).json({ error: "asc binary not found" });
+    sendError(res, 500, "asc binary not found");
     return;
   }
   try {
-    res.json({ groups: await fetchBetaGroups(appId) });
+    sendJson(res, 200, { groups: await fetchBetaGroups(appId) });
   } catch (err) {
-    res.status(502).json({ error: errorMessage(err).split("\n")[0] });
+    sendError(res, 502, errorMessage(err).split("\n")[0] as string);
   }
 });
 
@@ -149,7 +174,7 @@ async function apiKeyAuthStatus(): Promise<AuthCheck> {
       detail: hasCredentials ? "" : "No stored credentials. Run `asc auth login` to add an API key.",
     };
   } catch (err) {
-    return { ok: false, detail: (errorStderr(err) || errorMessage(err)).split("\n")[0] };
+    return { ok: false, detail: (errorStderr(err) || errorMessage(err)).split("\n")[0] as string };
   }
 }
 
@@ -162,44 +187,44 @@ async function webAuthStatus(): Promise<AuthCheck> {
       detail: status.authenticated ? "" : "No cached web session. Run `asc web auth login`.",
     };
   } catch (err) {
-    return { ok: false, detail: (errorStderr(err) || errorMessage(err)).split("\n")[0] };
+    return { ok: false, detail: (errorStderr(err) || errorMessage(err)).split("\n")[0] as string };
   }
 }
 
-app.get("/api/auth", async (_req, res) => {
+router.get("/api/auth", async (_req, res) => {
   if (!ASC_BIN) {
     const missing: AuthCheck = { ok: false, detail: "asc binary not found" };
-    res.json({ ...missing, apiKey: missing, web: missing });
+    sendJson(res, 200, { ...missing, apiKey: missing, web: missing });
     return;
   }
   const [apiKey, web] = await Promise.all([apiKeyAuthStatus(), webAuthStatus()]);
   // Top-level ok/detail mirror the API-key check for older clients.
-  res.json({ ok: apiKey.ok, detail: apiKey.detail, apiKey, web });
+  sendJson(res, 200, { ok: apiKey.ok, detail: apiKey.detail, apiKey, web });
 });
 
 // First-publish flow: create the App Store Connect app via a cached web
 // session. Relies on `asc web auth login` having been run beforehand; without
 // a session asc fails fast (stdin is not a TTY, so it cannot prompt).
-app.post("/api/apps/create", (req, res) => {
+router.post("/api/apps/create", (_req, res, { body }) => {
   if (!ASC_BIN) {
-    res.status(500).json({ error: "asc binary not found" });
+    sendError(res, 500, "asc binary not found");
     return;
   }
   if (isJobRunning()) {
-    res.status(409).json({ error: "Another job is already running" });
+    sendError(res, 409, "Another job is already running");
     return;
   }
-  const { name, bundleId, sku } = (req.body ?? {}) as { name?: string; bundleId?: string; sku?: string };
+  const { name, bundleId, sku } = (body ?? {}) as { name?: string; bundleId?: string; sku?: string };
   if (!name) {
-    res.status(400).json({ error: "App name is required" });
+    sendError(res, 400, "App name is required");
     return;
   }
   if (!bundleId) {
-    res.status(400).json({ error: "Bundle ID is required" });
+    sendError(res, 400, "Bundle ID is required");
     return;
   }
   if (!sku) {
-    res.status(400).json({ error: "SKU is required" });
+    sendError(res, 400, "SKU is required");
     return;
   }
   const args = [
@@ -210,19 +235,13 @@ app.post("/api/apps/create", (req, res) => {
     "--output", "json",
   ];
   startAscJob("app-create", args, "App created.");
-  res.json({ ok: true, job: jobStatus() });
+  sendJson(res, 200, { ok: true, job: jobStatus() });
 });
 
 // -- screenshots --
 
-// The shots root follows the (runtime-mutable) project dir, so bind the
-// static handler per request instead of once at startup.
-app.use("/shots/raw", (req, res, next) => express.static(rawDir())(req, res, next));
-app.use("/shots/framed", (req, res, next) => express.static(framedDir())(req, res, next));
-app.use("/shots/listing", (req, res, next) => express.static(listingDir())(req, res, next));
-
-app.get("/api/screenshots", (_req, res) => {
-  res.json({
+router.get("/api/screenshots", (_req, res) => {
+  sendJson(res, 200, {
     raw: listShots(rawDir()),
     framed: listShots(framedDir()),
     listing: listShots(listingDir()),
@@ -231,94 +250,94 @@ app.get("/api/screenshots", (_req, res) => {
   });
 });
 
-app.post("/api/screenshots/capture", async (req, res) => {
+router.post("/api/screenshots/capture", async (_req, res, { body }) => {
   try {
-    const body = (req.body ?? {}) as { name?: string };
-    const shot = await captureScreenshot(body.name || `shot-${Date.now()}`);
-    res.json({ ok: true, shot });
+    const payload = (body ?? {}) as { name?: string };
+    const shot = await captureScreenshot(payload.name || `shot-${Date.now()}`);
+    sendJson(res, 200, { ok: true, shot });
   } catch (err) {
-    res.status(500).json({ error: errorMessage(err).split("\n")[0] });
+    sendError(res, 500, errorMessage(err).split("\n")[0] as string);
   }
 });
 
-app.post("/api/screenshots/frame", async (req, res) => {
+router.post("/api/screenshots/frame", async (_req, res, { body }) => {
   if (!ASC_BIN) {
-    res.status(500).json({ error: "asc binary not found" });
+    sendError(res, 500, "asc binary not found");
     return;
   }
-  const { name, device = "iphone-air", title } = (req.body ?? {}) as {
+  const { name, device = "iphone-air", title } = (body ?? {}) as {
     name?: string;
     device?: string;
     title?: string;
   };
   try {
     const result = await frameScreenshot(sanitizeShotName(name), device, title);
-    res.json({ ok: true, result });
+    sendJson(res, 200, { ok: true, result });
   } catch (err) {
-    res.status(500).json({ error: errorMessage(err).split("\n").slice(0, 3).join(" ") });
+    sendError(res, 500, errorMessage(err).split("\n").slice(0, 3).join(" "));
   }
 });
 
-app.delete("/api/screenshots/:kind/:name", (req, res) => {
-  const { kind, name } = req.params;
+router.delete("/api/screenshots/:kind/:name", (_req, res, { params }) => {
+  const { kind, name } = params;
   const dir = kind === "framed" ? framedDir() : kind === "listing" ? listingDir() : rawDir();
   const file = path.join(dir, `${sanitizeShotName(name)}.png`);
   if (existsSync(file)) unlinkSync(file);
-  res.json({ ok: true });
+  sendJson(res, 200, { ok: true });
 });
 
 // -- screenshot editor (slides) --
 
 // Save one editor-exported slide PNG into the listing dir. Dimensions are
 // validated against the device type so the App Store upload won't reject it.
-app.post("/api/screenshots/slide", (req, res) => {
-  const { name, png, deviceType = "IPHONE_65" } = (req.body ?? {}) as {
+router.post("/api/screenshots/slide", (_req, res, { body }) => {
+  const { name, png, deviceType = "IPHONE_65" } = (body ?? {}) as {
     name?: string;
     png?: string;
     deviceType?: string;
   };
   if (!png) {
-    res.status(400).json({ error: "png (base64) is required" });
+    sendError(res, 400, "png (base64) is required");
     return;
   }
   try {
     const slide = saveSlide(name || `slide-${Date.now()}`, png, deviceType);
-    res.json({ ok: true, slide });
+    sendJson(res, 200, { ok: true, slide });
   } catch (err) {
-    res.status(400).json({ error: errorMessage(err) });
+    sendError(res, 400, errorMessage(err));
   }
 });
 
-app.get("/api/screenshots/deck", (_req, res) => {
-  res.json({ deck: readDeck() });
+router.get("/api/screenshots/deck", (_req, res) => {
+  sendJson(res, 200, { deck: readDeck() });
 });
 
-app.put("/api/screenshots/deck", (req, res) => {
-  const body = (req.body ?? {}) as { deviceType?: string; selected?: number; slides?: unknown[] };
-  if (!Array.isArray(body.slides)) {
-    res.status(400).json({ error: "slides array is required" });
+router.put("/api/screenshots/deck", (_req, res, { body }) => {
+  const payload = (body ?? {}) as { deviceType?: string; selected?: number; slides?: unknown[] };
+  if (!Array.isArray(payload.slides)) {
+    sendError(res, 400, "slides array is required");
     return;
   }
   writeDeck({
-    deviceType: String(body.deviceType || "IPHONE_65"),
-    selected: typeof body.selected === "number" ? body.selected : 0,
-    slides: body.slides,
+    deviceType: String(payload.deviceType || "IPHONE_65"),
+    selected: typeof payload.selected === "number" ? payload.selected : 0,
+    slides: payload.slides,
   });
-  res.json({ ok: true });
+  sendJson(res, 200, { ok: true });
 });
 
-app.post("/api/screenshots/upload", (req, res) => {
+router.post("/api/screenshots/upload", (_req, res, { body }) => {
   if (!ASC_BIN) {
-    res.status(500).json({ error: "asc binary not found" });
+    sendError(res, 500, "asc binary not found");
     return;
   }
   if (isJobRunning()) {
-    res.status(409).json({ error: "Another job is already running" });
+    sendError(res, 409, "Another job is already running");
     return;
   }
   const {
     appId, version, deviceType = "IPHONE_65", source = "framed", locale = "en-US",
-  } = (req.body ?? {}) as {
+  } = (body ?? {}) as {
     appId?: string;
     version?: string;
     deviceType?: string;
@@ -326,17 +345,17 @@ app.post("/api/screenshots/upload", (req, res) => {
     locale?: string;
   };
   if (!appId) {
-    res.status(400).json({ error: "App Store Connect app ID is required" });
+    sendError(res, 400, "App Store Connect app ID is required");
     return;
   }
   if (!version) {
-    res.status(400).json({ error: "App Store version is required" });
+    sendError(res, 400, "App Store version is required");
     return;
   }
   const dir = source === "raw" ? rawDir() : source === "listing" ? listingDir() : framedDir();
   const shots = listShots(dir);
   if (shots.length === 0) {
-    res.status(400).json({ error: `No ${source} screenshots to upload` });
+    sendError(res, 400, `No ${source} screenshots to upload`);
     return;
   }
 
@@ -356,33 +375,33 @@ app.post("/api/screenshots/upload", (req, res) => {
     "--output", "json", "--pretty",
   ];
   startAscJob("screenshots-upload", args, "Screenshots uploaded.");
-  res.json({ ok: true, job: jobStatus() });
+  sendJson(res, 200, { ok: true, job: jobStatus() });
 });
 
-app.post("/api/publish", (req, res) => {
+router.post("/api/publish", (_req, res, { body }) => {
   if (!ASC_BIN) {
-    res.status(500).json({ error: "asc binary not found. Set ASC_BIN or install asc on PATH." });
+    sendError(res, 500, "asc binary not found. Set ASC_BIN or install asc on PATH.");
     return;
   }
   if (isJobRunning()) {
-    res.status(409).json({ error: "A publish is already running" });
+    sendError(res, 409, "A publish is already running");
     return;
   }
   try {
-    startPublish((req.body ?? {}) as PublishBody);
+    startPublish((body ?? {}) as PublishBody);
   } catch (err) {
-    res.status(400).json({ error: errorMessage(err) });
+    sendError(res, 400, errorMessage(err));
     return;
   }
-  res.json({ ok: true, job: jobStatus() });
+  sendJson(res, 200, { ok: true, job: jobStatus() });
 });
 
-app.post("/api/publish/cancel", (_req, res) => {
+router.post("/api/publish/cancel", (_req, res) => {
   cancelJob();
-  res.json({ ok: true });
+  sendJson(res, 200, { ok: true });
 });
 
-app.get("/api/publish/stream", (req, res) => {
+router.get("/api/publish/stream", (req, res) => {
   attachSseClient(res, (cb) => req.on("close", cb));
 });
 
@@ -405,7 +424,8 @@ export async function main(): Promise<void> {
   await warmDetection();
   await startServeSimHelper();
 
-  const server = app.listen(PORT, () => {
+  const server = createServer((req, res) => router.handle(req, res));
+  server.listen(PORT, () => {
     console.log(`\n  Rork Local ready → http://localhost:${PORT}\n`);
   });
   server.on("upgrade", (req, socket, head) => sim.handleUpgrade(req, socket, head));
