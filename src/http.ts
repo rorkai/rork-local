@@ -68,7 +68,7 @@ function requestQuery(req: IncomingMessage): URLSearchParams {
 }
 
 async function readJsonBody(req: IncomingMessage, limitBytes: number): Promise<unknown> {
-  if (req.method === "GET" || req.method === "HEAD" || req.method === "DELETE") return undefined;
+  if (req.method === "GET" || req.method === "HEAD") return undefined;
 
   const chunks: Buffer[] = [];
   let size = 0;
