@@ -24,7 +24,7 @@
   "scripts": {
     "build": "bun run build:frontend && bun run build:server",
     "build:frontend": "bun build frontend/app.tsx --target browser --outdir public --minify --define process.env.NODE_ENV='\"production\"' && tailwindcss -i frontend/tailwind.css -o public/app.css --minify && cp frontend/index.html public/index.html",
-    "build:server": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external --tsconfig-override tsconfig.build.json && tsc --emitDeclarationOnly",
+    "build:server": "bun build src/cli.ts src/server.ts --target node --outdir dist --packages external --external \"*/server.js\" --tsconfig-override tsconfig.build.json && tsc --emitDeclarationOnly",
     "format": "prettier --write \"frontend/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"frontend/**/*.{ts,tsx,css}\"",
     "typecheck": "tsc --noEmit && tsc -p frontend/tsconfig.json",

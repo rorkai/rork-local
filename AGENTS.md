@@ -43,6 +43,11 @@ bun start          # node dist/cli.js (runs the built output)
   simulator bootstrap, `config.ts`, `types.ts` shared API payload types).
 - The published bin points straight at `dist/cli.js` (shebang preserved by
   `bun build`); rebuild before testing server changes through the bin.
+- `build:server` passes `--external "*/server.js"` so `dist/cli.js` stays a
+  140-byte re-export instead of inlining a second copy of the whole server.
+  Both files are bundle entry points, so without it bun emits the server twice.
+  `--splitting` looks like the tidier fix but bun 1.2 emits a duplicate
+  `export { main }` in `dist/server.js`, which Node refuses to load.
 - Frontend source changes under `frontend/` require `bun run build:frontend`;
   the generated static assets need no server restart.
 - The dev server typically runs under pm2 (`npx pm2 restart rork-local
