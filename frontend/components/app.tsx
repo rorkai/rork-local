@@ -67,7 +67,9 @@ function Header({
   return (
     <header className="z-10 flex h-12 shrink-0 items-center justify-between bg-rork-bg px-3">
       <div className="flex items-center gap-2">
-        <img src="/rork-logo.svg" alt="Rork" className="h-[22px] w-auto" />
+        <a href="https://rork.com" target="_blank" rel="noreferrer" title="rork.com" className="flex items-center">
+          <img src="/rork-logo.svg" alt="Rork" className="h-[22px] w-auto" />
+        </a>
         <span className="rounded border border-white/15 bg-white/[0.06] px-1.5 py-1 text-[10px] font-semibold tracking-wider text-rork-muted uppercase">
           Local
         </span>
