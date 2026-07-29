@@ -1,9 +1,25 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  ExternalLink,
+  Frame,
+  Images,
+  Pencil,
+  ScanSearch,
+  Send,
+  SquarePen,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import type { AuthCheck, JobLine, ShotInfo, StatusResponse } from "../../src/types";
 import { useEscape } from "../hooks/use-escape";
 import { usePublishEvents } from "../hooks/use-publish-events";
 import { queryKeys } from "../query-keys";
+import { ScreenshotEditor } from "./screenshot-editor";
 import { control, iconButton, input, label, Modal, muted, primary, surface } from "./ui";
 
 type Shots = {
@@ -73,19 +89,32 @@ function Header({
         </span>
       </div>
       <div className="flex items-center gap-2">
-        <button className={iconButton} onClick={capture} title="Take screenshot" aria-label="Take screenshot">
-          ⌾
+        <button
+          type="button"
+          className={iconButton}
+          onClick={capture}
+          title="Take screenshot"
+          aria-label="Take screenshot"
+        >
+          <Camera aria-hidden="true" />
         </button>
-        <button className={`${iconButton} relative`} onClick={openShots} title="Screenshots" aria-label="Screenshots">
-          ▧
+        <button
+          type="button"
+          className={`${iconButton} relative`}
+          onClick={openShots}
+          title="Screenshots"
+          aria-label="Screenshots"
+        >
+          <Images aria-hidden="true" />
           {shotCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 min-w-4 rounded-full bg-white px-1 text-[10px] leading-4 text-black">
               {shotCount}
             </span>
           )}
         </button>
-        <button className={primary} onClick={openPublish}>
-          Publish{" "}
+        <button className={`${primary} gap-2`} onClick={openPublish}>
+          <Upload className="size-4" aria-hidden="true" />
+          Publish
           <span className={`ml-2 size-2 rounded-full ${running ? "animate-pulse bg-amber-500" : "bg-black/35"}`} />
         </button>
       </div>
@@ -180,8 +209,14 @@ function PublishDialog({
             Step {step + 1} of 3 · {["App Info", "Credentials", "Submit"][step]}
           </p>
         </div>
-        <button className={iconButton} onClick={close}>
-          ×
+        <button
+          type="button"
+          className={iconButton}
+          onClick={close}
+          title="Close publish dialog"
+          aria-label="Close publish dialog"
+        >
+          <X aria-hidden="true" />
         </button>
       </div>
       <div className="flex gap-2 px-5 pt-4">
@@ -200,7 +235,8 @@ function PublishDialog({
                   value={form.projectDir}
                   onChange={(e) => update("projectDir", e.target.value)}
                 />
-                <button className={control} onClick={scanProject}>
+                <button className={`${control} gap-2`} onClick={scanProject}>
+                  <ScanSearch className="size-4" aria-hidden="true" />
                   Scan
                 </button>
               </div>
@@ -296,12 +332,20 @@ function PublishDialog({
       </div>
       <div className="flex justify-end gap-2 border-t border-white/10 p-4">
         {step > 0 && step < 2 && (
-          <button className={control} onClick={() => setStep(step - 1)}>
+          <button className={`${control} gap-2`} onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="size-4" aria-hidden="true" />
             Back
           </button>
         )}
-        <button className={primary} onClick={() => void continueFlow()}>
+        <button className={`${primary} gap-2`} onClick={() => void continueFlow()}>
           {step === 0 ? "Continue" : step === 1 ? "Start submission" : "Close"}
+          {step === 0 ? (
+            <ArrowRight className="size-4" aria-hidden="true" />
+          ) : step === 1 ? (
+            <Send className="size-4" aria-hidden="true" />
+          ) : (
+            <X className="size-4" aria-hidden="true" />
+          )}
         </button>
       </div>
     </Modal>
@@ -330,19 +374,23 @@ function ShotCard({
       </span>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/60 opacity-0 transition group-hover:opacity-100">
         {edit && (
-          <button className={control} onClick={edit}>
+          <button className={`${control} gap-2`} onClick={edit}>
+            <Pencil className="size-4" aria-hidden="true" />
             Edit
           </button>
         )}
         {frame && (
-          <button className={control} onClick={frame}>
+          <button className={`${control} gap-2`} onClick={frame}>
+            <Frame className="size-4" aria-hidden="true" />
             Frame
           </button>
         )}
-        <a className={control} href={src} target="_blank" rel="noreferrer">
+        <a className={`${control} gap-2`} href={src} target="_blank" rel="noreferrer">
+          <ExternalLink className="size-4" aria-hidden="true" />
           View
         </a>
-        <button className={`${control} text-red-400`} onClick={remove}>
+        <button className={`${control} gap-2 text-red-400`} onClick={remove}>
+          <Trash2 className="size-4" aria-hidden="true" />
           Delete
         </button>
       </div>
@@ -390,11 +438,18 @@ function ScreenshotsDrawer({
         <div className="flex items-center justify-between border-b border-white/10 p-4">
           <h2 className="font-semibold">Screenshots</h2>
           <div className="flex gap-2">
-            <button className={control} onClick={() => void capture()}>
+            <button className={`${control} gap-2`} onClick={() => void capture()}>
+              <Camera className="size-4" aria-hidden="true" />
               Capture
             </button>
-            <button className={iconButton} onClick={close}>
-              ×
+            <button
+              type="button"
+              className={iconButton}
+              onClick={close}
+              title="Close screenshots"
+              aria-label="Close screenshots"
+            >
+              <X aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -437,7 +492,8 @@ function ScreenshotsDrawer({
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-xs font-medium tracking-wider text-rork-muted uppercase">Listing slides</h3>
-              <button className={control} onClick={() => edit()}>
+              <button className={`${control} gap-2`} onClick={() => edit()}>
+                <SquarePen className="size-4" aria-hidden="true" />
                 Open editor
               </button>
             </div>
@@ -451,105 +507,6 @@ function ScreenshotsDrawer({
         </div>
       </aside>
     </div>
-  );
-}
-
-function ScreenshotEditor({ shot, close, saved }: { shot?: ShotInfo; close: () => void; saved: () => Promise<void> }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const [headline, setHeadline] = useState("Your headline");
-  const [from, setFrom] = useState("#1a1a2e");
-  const [to, setTo] = useState("#4a2a6a");
-  const [error, setError] = useState("");
-
-  useEscape(close);
-  useEffect(() => {
-    const target = canvas.current;
-    if (!target) return;
-    target.width = 430;
-    target.height = 932;
-    const context = target.getContext("2d");
-    if (!context) return;
-    const gradient = context.createLinearGradient(0, 0, 0, target.height);
-    gradient.addColorStop(0, from);
-    gradient.addColorStop(1, to);
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, target.width, target.height);
-    context.fillStyle = "#fff";
-    context.textAlign = "center";
-    context.font = "700 42px -apple-system, sans-serif";
-    context.fillText(headline, target.width / 2, 90, target.width - 50);
-    if (!shot) return;
-    const image = new Image();
-    image.onload = () => {
-      const width = 330;
-      const height = (image.naturalHeight / image.naturalWidth) * width;
-      context.save();
-      context.shadowColor = "rgba(0,0,0,.5)";
-      context.shadowBlur = 25;
-      context.fillStyle = "#111";
-      context.roundRect(40, 160, width + 20, height + 20, 42);
-      context.fill();
-      context.restore();
-      context.save();
-      context.roundRect(50, 170, width, height, 34);
-      context.clip();
-      context.drawImage(image, 50, 170, width, height);
-      context.restore();
-    };
-    image.src = `/shots/raw/${shot.file}`;
-  }, [from, headline, shot, to]);
-
-  async function save() {
-    try {
-      await post("/api/screenshots/slide", {
-        name: "slide-01",
-        png: canvas.current?.toDataURL("image/png"),
-        deviceType: "IPHONE_69",
-      });
-      await saved();
-      close();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
-    }
-  }
-
-  return (
-    <Modal close={close} className="flex h-full w-full max-w-5xl flex-col">
-      <div className="flex items-center justify-between border-b border-white/10 p-4">
-        <h2 className="font-semibold">Screenshot editor</h2>
-        <div className="flex gap-2">
-          <button className={primary} onClick={() => void save()}>
-            Save slide
-          </button>
-          <button className={iconButton} onClick={close}>
-            ×
-          </button>
-        </div>
-      </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[1fr_260px]">
-        <div className="grid min-h-0 place-items-center bg-black/30 p-5">
-          <canvas ref={canvas} className="max-h-full max-w-full rounded-lg shadow-2xl" />
-        </div>
-        <aside className="space-y-5 overflow-y-auto border-l border-white/10 p-5">
-          <label className={label}>
-            Headline
-            <input className={input} value={headline} onChange={(e) => setHeadline(e.target.value)} />
-          </label>
-          <label className={label}>
-            Gradient start
-            <input type="color" className="h-10 w-full" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </label>
-          <label className={label}>
-            Gradient end
-            <input type="color" className="h-10 w-full" value={to} onChange={(e) => setTo(e.target.value)} />
-          </label>
-          <p className={muted}>
-            {shot ? `Using ${shot.name}` : "Choose Edit on a raw capture to place it in the slide."}
-          </p>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-        </aside>
-      </div>
-    </Modal>
   );
 }
 
@@ -651,7 +608,12 @@ export function App() {
         />
       )}
       {editor.open && (
-        <ScreenshotEditor shot={editor.shot} close={() => setEditor({ open: false })} saved={refreshShots} />
+        <ScreenshotEditor
+          shot={editor.shot}
+          rawShots={shots.raw}
+          close={() => setEditor({ open: false })}
+          saved={refreshShots}
+        />
       )}
       {error && !shotsOpen && (
         <div className="fixed bottom-10 left-1/2 z-50 -translate-x-1/2 rounded-control bg-red-500 px-4 py-2 text-sm text-white shadow-xl">
