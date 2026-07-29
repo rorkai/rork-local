@@ -20,6 +20,11 @@ one-click TestFlight / App Store publishing and screenshot tooling (via the
   Keep the entry point thin, put reusable UI under `frontend/components/`,
   reusable behavior under `frontend/hooks/`, and use TanStack React Query for
   HTTP server state and cache invalidation.
+- Frontend-only packages belong in `devDependencies`. The browser bundle is
+  prebuilt into `public/` by `prepublishOnly`, so React and friends are never
+  imported at runtime — listing them under `dependencies` just makes every
+  `npx rork-local` user download them. Only add to `dependencies` what `src/`
+  actually imports.
 
 ## Build and dev
 
