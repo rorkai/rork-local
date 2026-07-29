@@ -9,3 +9,4 @@ screenshots/
 *.log
 public/app.js
 public/app.css
+.direnv/
